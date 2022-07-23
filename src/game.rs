@@ -1,4 +1,7 @@
-use crate::{field::{Field, Pos}, piece::Piece};
+use crate::{
+    field::{Field, Pos},
+    piece::Piece,
+};
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Player {
@@ -7,7 +10,7 @@ pub enum Player {
 }
 
 impl Player {
-    pub fn next(&self) -> Self {
+    pub fn next(self) -> Self {
         match self {
             Self::PlayerOne => Self::PlayerTwo,
             Self::PlayerTwo => Self::PlayerOne,
@@ -27,7 +30,9 @@ pub enum Status {
     Won {
         winner: Player,
     },
-    Draw {last_move: Player},
+    Draw {
+        last_player: Player,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -38,7 +43,6 @@ pub struct Game {
 }
 
 impl Game {
-
     pub fn remaining_pieces(&self) -> &[Piece] {
         &self.remaining_pieces
     }
@@ -56,8 +60,11 @@ impl Game {
     /// Gives the initial piece to the opponent, as we do not actually put a piece onto the field
     /// in the first turn.
     pub fn initial_move(&mut self, next_piece: Piece) -> Result<(), ()> {
-        if let Status::InitialMove {starting_player} = self.status {
-            self.status = Status::Move { next_player: starting_player.next(), next_piece };
+        if let Status::InitialMove { starting_player } = self.status {
+            self.status = Status::Move {
+                next_player: starting_player.next(),
+                next_piece,
+            };
             Ok(())
         } else {
             Err(())
@@ -67,55 +74,64 @@ impl Game {
     /// Next move, actually put a piece on the field, and give the next piece to the opponent or
     /// checks if a player won..
     pub fn do_move(&mut self, pos: Pos, next_piece: Piece) -> Result<(), ()> {
-        if let Status::Move { next_player: player, next_piece: piece } = self.status {
-
+        if let Status::Move {
+            next_player: player,
+            next_piece: piece,
+        } = self.status
+        {
             self.field.put(pos, piece)?;
             if self.field.check_field_for_win() {
-                self.status = Status::Won{winner: player}
+                self.status = Status::Won { winner: player }
             } else {
-                self.status = Status::Move{next_player: player.next(), next_piece}
+                self.status = Status::Move {
+                    next_player: player.next(),
+                    next_piece,
+                }
             };
             Ok(())
-
         } else {
             Err(())
         }
     }
 
     pub fn last_move(&mut self, pos: Pos) -> Result<(), ()> {
-         if let Status::Move { next_player: player, next_piece: piece } = self.status {
+        if let Status::Move {
+            next_player: player,
+            next_piece: piece,
+        } = self.status
+        {
             self.field.put(pos, piece)?;
             if self.field.check_field_for_win() {
-                self.status = Status::Won{winner: player}
+                self.status = Status::Won { winner: player }
             } else {
-                self.status = Status::Draw{last_player: player}
+                self.status = Status::Draw {
+                    last_player: player,
+                }
             };
-         } else {
-             Err(())
-         }
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 
-
     /// Undo the latest move
-    pub fn unmove(&mut status, last_pos: Pos) {
-        let next_player = match self.status() {
-            Status::IntialMove { .. } => panic!("Can't unmove an initial move"),
-            Status::Won{winner} => winner,
-            Status::Draw{last_player} => last_player,
-            Status::Move{next_player, ..} => next_player,
-        }
+    pub fn unmove(&mut self, last_pos: Pos) {
+        let next_player = match self.status {
+            Status::InitialMove { .. } => panic!("Can't unmove an initial move"),
+            Status::Won { winner } => winner,
+            Status::Draw { last_player } => last_player,
+            Status::Move { next_player, .. } => next_player,
+        };
 
         // There are only two players, so next is also prev.
-        let prev_player = next_player.next()
+        let prev_player = next_player.next();
 
-
-        let last_piece = self.field[last_pos.0][last_pos.1].unwrap();
-        self.field[last_pos.0][last_pos.1] = None;
+        let last_piece = self.field.clear(last_pos).unwrap();
         self.remaining_pieces.push(last_piece);
 
         if self.remaining_pieces.len() == Field::SIZE * Field::SIZE {
             self.status = Status::InitialMove {
-                starting_player: next_player
+                starting_player: next_player,
             }
         } else {
             self.status = Status::Move {
@@ -123,7 +139,5 @@ impl Game {
                 next_player: prev_player,
             }
         };
-        Ok(())
     }
-
 }

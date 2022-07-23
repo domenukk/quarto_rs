@@ -4,8 +4,9 @@ pub struct Piece {
     pub properties: u8,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq)]
 #[repr(u8)]
-pub enum PieceProperty {
+pub enum Property {
     Tall = 1 << 0,
     Round = 1 << 1,
     Full = 1 << 2,
@@ -25,7 +26,7 @@ impl Piece {
         Piece { properties: props }
     }
 
-    pub fn set(&mut self, prop: PieceProperty, val: bool) {
+    pub fn set(&mut self, prop: Property, val: bool) {
         if val {
             self.properties |= prop as u8;
             self.properties &= !((prop as u8) << 4);
@@ -35,7 +36,7 @@ impl Piece {
         }
     }
 
-    pub fn get(&self, prop: PieceProperty) -> bool {
+    pub fn get(self, prop: Property) -> bool {
         (self.properties & prop as u8) != 0
     }
 }

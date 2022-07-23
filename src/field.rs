@@ -6,7 +6,6 @@ pub struct Field {
     field: [[Option<Piece>; Self::SIZE]; Self::SIZE],
 }
 
-
 pub type Pos = (usize, usize);
 
 impl Field {
@@ -24,9 +23,20 @@ impl Field {
         Err(())
     }
 
+    pub fn get(&self, pos: Pos) -> Option<Piece> {
+        self.field[pos.0][pos.1]
+    }
+
+    /// Clear at a position, returning the current piece at this point
+    pub fn clear(&mut self, pos: Pos) -> Option<Piece> {
+        let ret = self.get(pos);
+        self.field[pos.0][pos.1] = None;
+        ret
+    }
+
     /// Checks if the win condition on this field is fulfilled.
     pub fn check_field_for_win(&self) -> bool {
-        for row in self.field.iter() {
+        for row in &self.field {
             if Self::check_array_for_win(row) {
                 return true;
             }
@@ -107,10 +117,10 @@ impl Field {
 mod tests {
     use crate::{
         field::Field,
-        piece::{Piece, PieceProperty},
+        piece::{Piece, Property},
     };
     const TEST_LIGHT_TALL: Piece =
-        Piece::new_with_props(PieceProperty::Tall as u8 | PieceProperty::Light as u8);
+        Piece::new_with_props(Property::Tall as u8 | Property::Light as u8);
     const TEST_DARK_SHORT: Piece = Piece::new();
 
     #[test]

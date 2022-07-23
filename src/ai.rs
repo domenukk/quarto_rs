@@ -1,8 +1,12 @@
-use crate::{game::{Game, Player, Status}, field::Pos};
+use crate::{
+    field::Pos,
+    game::{Game, Player, Status},
+};
 use libafl::bolts::rands::{Rand, RandomSeed, StdRand};
 
 type Score = usize;
 
+#[allow(clippy::module_name_repetitions)]
 pub struct SimpleAi {
     own_player: Player,
     depth: usize,
@@ -31,6 +35,7 @@ impl SimpleAi {
         match game.status {
             Status::InitialMove { starting_player } => {
                 let rand_val = self.rng.next() % next_game.remaining_pieces().len() as u64;
+                #[allow(clippy::cast_possible_truncation)]
                 let piece = next_game.remaining_pieces()[rand_val as usize];
                 next_game.status = Status::Move {
                     next_player: starting_player.next(),
@@ -50,22 +55,23 @@ impl SimpleAi {
                     // We calculate if we will win for every possible place, that is still free and
                     // where we can place our current_piece.
                     for pos in possible_spaces {
-
                         // We will also have to calculate the optimal piece to give to our
                         // opponent, which is the piece with the least likely chance of winning.
                         for next_piece in game.remaining_pieces() {
+                            next_game.status = Status::Move {
+                                next_player,
+                                next_piece: *next_piece,
+                            };
 
-                            next_game.status = Status::Move{ next_player,
-                                                     next_piece: *next_piece };
-
-                            self.play_rec(&next_game, depth-1);
+                            self.play_rec(&next_game, depth - 1);
                         }
                     }
                 }
                 // TODO
                 (next_game, 0)
             }
-            Status::Won { winner: _ } => (next_game, 0)
+            Status::Won { winner } => (next_game, if winner == self.own_player { 10 } else { 0 }),
+            Status::Draw { .. } => (next_game, 5),
         }
     }
 }
