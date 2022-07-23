@@ -1,7 +1,15 @@
+use std::fmt::Formatter;
+
 /// A quarto piece.
-#[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
+#[derive(Default, PartialEq, Eq, Copy, Clone)]
 pub struct Piece {
     pub properties: u8,
+}
+
+impl std::fmt::Debug for Piece {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.pp_write(f)
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -38,5 +46,56 @@ impl Piece {
 
     pub fn get(self, prop: Property) -> bool {
         (self.properties & prop as u8) != 0
+    }
+
+    pub fn pp_write(self, f: &mut Formatter) -> std::fmt::Result {
+        f.write_str("[")?;
+        if self.get(Property::Tall) {
+            f.write_str("⬆️")?;
+        } else {
+            f.write_str("⬇️")?;
+        }
+        if self.get(Property::Round) {
+            f.write_str("🟠")?;
+        } else {
+            write!(f, "🔶")?;
+        }
+        if self.get(Property::Full) {
+            f.write_str("🔴")?;
+        } else {
+            f.write_str("⭕")?;
+        }
+        if self.get(Property::Light) {
+            f.write_str("⬜")?;
+        } else {
+            f.write_str("⬛")?;
+        }
+        f.write_str("]")
+    }
+
+    /// Pretty-print a piece
+    pub fn pp(self) {
+        print!("[");
+        if self.get(Property::Tall) {
+            print!("⬆️");
+        } else {
+            print!("⬇️");
+        }
+        if self.get(Property::Light) {
+            print!("⬜");
+        } else {
+            print!("⬛");
+        }
+        if self.get(Property::Round) {
+            print!("🟠");
+        } else {
+            print!("🔶");
+        }
+        if self.get(Property::Full) {
+            print!("🔴");
+        } else {
+            print!("⭕");
+        }
+        print!("]");
     }
 }

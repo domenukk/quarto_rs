@@ -1,5 +1,5 @@
 /*!
-Welcome to `LibAFL`
+Welcome to `quarto_rs`
 */
 
 #![warn(clippy::cargo)]
@@ -48,11 +48,30 @@ Welcome to `LibAFL`
     )
 )]
 
+use crate::{
+    field::Field,
+    piece::{Piece, Property},
+};
+
 mod ai;
 mod field;
 mod game;
 mod piece;
 
 fn main() {
-    println!("Hello, world!");
+    let test_light_tall: Piece =
+        Piece::new_with_props(Property::Tall as u8 | Property::Light as u8);
+    let test_dark_short: Piece = Piece::new();
+
+    let mut field = Field::new();
+
+    field.put((3, 0), test_light_tall).unwrap();
+    field.put((2, 1), test_light_tall).unwrap();
+    field.put((1, 2), test_dark_short).unwrap();
+
+    assert!(!field.check_field_for_win());
+
+    field.put((0, 3), test_light_tall).unwrap();
+
+    field.pp()
 }

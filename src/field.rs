@@ -1,3 +1,5 @@
+use std::iter::Enumerate;
+
 use crate::piece::Piece;
 
 #[derive(Debug, Default, Clone)]
@@ -111,6 +113,23 @@ impl Field {
 
         ret
     }
+
+    pub fn pp(&self) {
+        for (i, row) in (&self.field).iter().enumerate() {
+            for (_k, val) in (row).iter().enumerate() {
+                if i == 0 {
+                    println!("\n ------   -------   ------   ------- ");
+                } else if i < Self::SIZE - 1 {
+                    print!(" | ");
+                }
+                if let Some(val) = val {
+                    val.pp();
+                } else {
+                    print!("      ");
+                }
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -127,13 +146,13 @@ mod tests {
     fn test_squares() {
         let mut field = Field::new();
 
-        field.put((0, 0), TEST_LIGHT_TALL);
-        field.put((0, 1), TEST_LIGHT_TALL);
-        field.put((1, 0), TEST_LIGHT_TALL);
+        field.put((0, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((0, 1), TEST_LIGHT_TALL).unwrap();
+        field.put((1, 0), TEST_LIGHT_TALL).unwrap();
 
         assert!(!field.check_field_for_win());
 
-        field.put((1, 1), TEST_LIGHT_TALL);
+        field.put((1, 1), TEST_LIGHT_TALL).unwrap();
 
         assert!(field.check_field_for_win());
     }
@@ -142,10 +161,10 @@ mod tests {
     fn test_wrong_prop_square() {
         let mut field = Field::new();
 
-        field.put((0, 0), TEST_LIGHT_TALL);
-        field.put((0, 1), TEST_DARK_SHORT);
-        field.put((1, 0), TEST_LIGHT_TALL);
-        field.put((1, 1), TEST_LIGHT_TALL);
+        field.put((0, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((0, 1), TEST_DARK_SHORT).unwrap();
+        field.put((1, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((1, 1), TEST_LIGHT_TALL).unwrap();
 
         assert!(!field.check_field_for_win());
     }
@@ -154,10 +173,10 @@ mod tests {
     fn test_different_square() {
         let mut field = Field::new();
 
-        field.put((2, 2), TEST_LIGHT_TALL);
-        field.put((2, 3), TEST_LIGHT_TALL);
-        field.put((3, 2), TEST_LIGHT_TALL);
-        field.put((3, 3), TEST_LIGHT_TALL);
+        field.put((2, 2), TEST_LIGHT_TALL).unwrap();
+        field.put((2, 3), TEST_LIGHT_TALL).unwrap();
+        field.put((3, 2), TEST_LIGHT_TALL).unwrap();
+        field.put((3, 3), TEST_LIGHT_TALL).unwrap();
 
         assert!(field.check_field_for_win());
     }
@@ -166,13 +185,13 @@ mod tests {
     fn test_row() {
         let mut field = Field::new();
 
-        field.put((0, 0), TEST_LIGHT_TALL);
-        field.put((0, 1), TEST_LIGHT_TALL);
-        field.put((0, 2), TEST_LIGHT_TALL);
+        field.put((0, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((0, 1), TEST_LIGHT_TALL).unwrap();
+        field.put((0, 2), TEST_LIGHT_TALL).unwrap();
 
         assert!(!field.check_field_for_win());
 
-        field.put((0, 3), TEST_LIGHT_TALL);
+        field.put((0, 3), TEST_LIGHT_TALL).unwrap();
 
         assert!(field.check_field_for_win());
     }
@@ -181,13 +200,13 @@ mod tests {
     fn test_wrong_prop_row() {
         let mut field = Field::new();
 
-        field.put((0, 0), TEST_LIGHT_TALL);
-        field.put((0, 1), TEST_LIGHT_TALL);
-        field.put((0, 2), TEST_DARK_SHORT);
+        field.put((0, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((0, 1), TEST_LIGHT_TALL).unwrap();
+        field.put((0, 2), TEST_DARK_SHORT).unwrap();
 
         assert!(!field.check_field_for_win());
 
-        field.put((0, 3), TEST_LIGHT_TALL);
+        field.put((0, 3), TEST_LIGHT_TALL).unwrap();
 
         assert!(!field.check_field_for_win());
     }
@@ -196,13 +215,13 @@ mod tests {
     fn test_col() {
         let mut field = Field::new();
 
-        field.put((0, 0), TEST_LIGHT_TALL);
-        field.put((1, 0), TEST_LIGHT_TALL);
-        field.put((2, 0), TEST_LIGHT_TALL);
+        field.put((0, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((1, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((2, 0), TEST_LIGHT_TALL).unwrap();
 
         assert!(!field.check_field_for_win());
 
-        field.put((3, 0), TEST_LIGHT_TALL);
+        field.put((3, 0), TEST_LIGHT_TALL).unwrap();
 
         assert!(field.check_field_for_win());
     }
@@ -211,13 +230,13 @@ mod tests {
     fn test_wrong_prop_col() {
         let mut field = Field::new();
 
-        field.put((0, 0), TEST_LIGHT_TALL);
-        field.put((1, 0), TEST_LIGHT_TALL);
-        field.put((2, 0), TEST_DARK_SHORT);
+        field.put((0, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((1, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((2, 0), TEST_DARK_SHORT).unwrap();
 
         assert!(!field.check_field_for_win());
 
-        field.put((3, 0), TEST_LIGHT_TALL);
+        field.put((3, 0), TEST_LIGHT_TALL).unwrap();
 
         assert!(!field.check_field_for_win());
     }
@@ -226,13 +245,13 @@ mod tests {
     fn test_diag() {
         let mut field = Field::new();
 
-        field.put((0, 0), TEST_LIGHT_TALL);
-        field.put((1, 1), TEST_LIGHT_TALL);
-        field.put((2, 2), TEST_LIGHT_TALL);
+        field.put((0, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((1, 1), TEST_LIGHT_TALL).unwrap();
+        field.put((2, 2), TEST_LIGHT_TALL).unwrap();
 
         assert!(!field.check_field_for_win());
 
-        field.put((3, 3), TEST_LIGHT_TALL);
+        field.put((3, 3), TEST_LIGHT_TALL).unwrap();
 
         assert!(field.check_field_for_win());
     }
@@ -241,13 +260,13 @@ mod tests {
     fn test_wrong_prop_diag() {
         let mut field = Field::new();
 
-        field.put((0, 0), TEST_LIGHT_TALL);
-        field.put((1, 1), TEST_LIGHT_TALL);
-        field.put((2, 2), TEST_DARK_SHORT);
+        field.put((0, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((1, 1), TEST_LIGHT_TALL).unwrap();
+        field.put((2, 2), TEST_DARK_SHORT).unwrap();
 
         assert!(!field.check_field_for_win());
 
-        field.put((3, 3), TEST_LIGHT_TALL);
+        field.put((3, 3), TEST_LIGHT_TALL).unwrap();
 
         assert!(!field.check_field_for_win());
     }
@@ -256,13 +275,13 @@ mod tests {
     fn test_other_diag() {
         let mut field = Field::new();
 
-        field.put((3, 0), TEST_LIGHT_TALL);
-        field.put((2, 1), TEST_LIGHT_TALL);
-        field.put((1, 2), TEST_LIGHT_TALL);
+        field.put((3, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((2, 1), TEST_LIGHT_TALL).unwrap();
+        field.put((1, 2), TEST_LIGHT_TALL).unwrap();
 
         assert!(!field.check_field_for_win());
 
-        field.put((0, 3), TEST_LIGHT_TALL);
+        field.put((0, 3), TEST_LIGHT_TALL).unwrap();
 
         assert!(field.check_field_for_win());
     }
