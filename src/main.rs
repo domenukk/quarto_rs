@@ -48,8 +48,13 @@ Welcome to `quarto_rs`
     )
 )]
 
+use std::io;
+
+use field::Pos;
+use game::{Game, Player};
+
 use crate::{
-    field::Field,
+    field::{try_parse_pos, Field},
     piece::{Piece, Property},
 };
 
@@ -59,7 +64,7 @@ mod game;
 mod piece;
 
 fn main() {
-    let test_light_tall: Piece =
+    /*let test_light_tall: Piece =
         Piece::new_with_props(Property::Tall as u8 | Property::Light as u8);
     let test_dark_short: Piece = Piece::new();
 
@@ -73,5 +78,60 @@ fn main() {
 
     field.put((0, 3), test_light_tall).unwrap();
 
-    field.pp();
+    field.pp();*/
+
+    let mut game = Game::new(Player::PlayerOne);
+
+    let stdin = io::stdin();
+    let mut buf = String::new();
+
+    println!("Let the games begin!");
+
+    loop {
+        game.pp();
+        if !game.running() {
+            return;
+        }
+
+        let piece_id: usize = loop {
+            println!(
+                "{:?}, please chose the id of the next piece:",
+                game.player()
+            );
+            buf.clear();
+            stdin.read_line(&mut buf).unwrap();
+            let num = buf.trim().parse();
+            if let Ok(num) = num {
+                if num < game.remaining_pieces().len() {
+                    break num;
+                }
+            }
+            #[cfg(debug_assertions)]
+            println!("{} (str: {})", num.err().unwrap(), &buf);
+            println!(
+                "Illegal choice: {}, please pick the id of a remaining piece:",
+                buf
+            );
+            game.pp_remaining_pieces();
+        };
+        let next_piece = game.remaining_pieces()[piece_id];
+
+        if game.is_initial_move() {
+            game.initial_move(next_piece).unwrap();
+        } else {
+            loop {
+                println!("Select x,y to put the place to:");
+                buf.clear();
+                stdin.read_line(&mut buf).unwrap();
+                let pos = try_parse_pos(&buf);
+                if let Ok(pos) = pos {
+                    if game.do_move(pos, next_piece).is_ok() {
+                        break;
+                    }
+                }
+                println!("Illegal move! The x,y value must be an empty place on the field!");
+            }
+        }
+        println!();
+    }
 }

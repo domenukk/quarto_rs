@@ -71,14 +71,15 @@ impl Piece {
             //f.write_str("🏳️")?;
             f.write_str("⬜")?;
         } else {
-            f.write_str("🏴")?;
-            //f.write_str("⬛")?;
+            //f.write_str("🏴")?;
+            f.write_str("⬛")?;
         }
         f.write_str("]")
     }
 
     /// Pretty-print a piece
     pub fn pp(self) {
+        // TODO: This could probably be in Debug or Display?
         print!("[");
         if self.get(Property::Tall) {
             print!("✋");

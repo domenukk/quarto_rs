@@ -8,6 +8,17 @@ pub struct Field {
 
 pub type Pos = (usize, usize);
 
+/// Tries to parse a "x,y" str to Pos
+pub fn try_parse_pos(s: &str) -> Result<Pos, ()> {
+    let parts: Vec<&str> = s.trim().split(',').collect();
+    if parts.len() != 2 {
+        return Err(());
+    }
+    let x: usize = parts[0].parse().map_err(|_| ())?;
+    let y: usize = parts[1].parse().map_err(|_| ())?;
+    Ok((x, y))
+}
+
 impl Field {
     pub const SIZE: usize = 4;
 
@@ -116,7 +127,10 @@ impl Field {
         for (i, row) in (&self.field).iter().enumerate() {
             for (k, val) in (row).iter().enumerate() {
                 if k == 0 {
-                    println!("\n---------   ---------   ---------   ---------");
+                    if i > 0 {
+                        println!();
+                    }
+                    println!("---------   ---------   ---------   ---------");
                 } else if k < Self::SIZE {
                     print!(" | ");
                 }

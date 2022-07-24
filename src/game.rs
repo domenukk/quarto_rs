@@ -56,6 +56,93 @@ impl Game {
         }
     }
 
+    pub fn round(&self) -> u8 {
+        (((Field::SIZE * Field::SIZE - self.remaining_pieces.len()) / 2) + 1)
+            .try_into()
+            .unwrap()
+    }
+
+    pub fn player(&self) -> Player {
+        match self.status {
+            Status::InitialMove { starting_player } => starting_player,
+            Status::Move { next_player, .. } => next_player,
+            Status::Won { winner } => winner,
+            Status::Draw { last_player } => last_player,
+        }
+    }
+
+    /// Returns true if the game is running, false if it's over (`Draw` or `Won`)
+    pub fn running(&self) -> bool {
+        match self.status {
+            Status::InitialMove { .. } | Status::Move { .. } => true,
+            Status::Won { .. } | Status::Draw { .. } => false,
+        }
+    }
+
+    /// Returns the winner, if the game is over, and it is not a draw
+    pub fn winner(&self) -> Option<Player> {
+        if let Status::Won { winner } = self.status {
+            Some(winner)
+        } else {
+            None
+        }
+    }
+
+    pub fn is_initial_move(&self) -> bool {
+        matches!(self.status, Status::InitialMove { .. })
+    }
+
+    pub fn next_piece(&self) -> Option<Piece> {
+        if let Status::Move { next_piece, .. } = self.status {
+            Some(next_piece)
+        } else {
+            None
+        }
+    }
+
+    pub fn pp(&self) {
+        println!("Quarto, round: {}", self.round());
+        if self.running() {
+            println!("{:?}, move!", self.player());
+            if let Some(piece) = self.next_piece() {
+                print!("Your piece is: ");
+                piece.pp();
+                println!();
+            }
+        } else if let Some(winner) = self.winner() {
+            println!("{:?} won!", winner);
+        } else {
+            println!("Game ended in a draw!");
+        }
+
+        println!("\nField:");
+        self.field.pp();
+        println!();
+
+        if !self.remaining_pieces().is_empty() {
+            println!("\nRemaining Pieces:");
+            self.pp_remaining_pieces();
+        }
+    }
+
+    pub fn pp_remaining_pieces(&self) {
+        for (i, piece) in self.remaining_pieces().iter().enumerate() {
+            if i > 0 && (i) % 3 == 0 {
+                println!();
+            }
+            print!("{}: ", i);
+            if i < 10 {
+                // padding for low numbers
+                print!(" ");
+            }
+            piece.pp();
+            if i < (Field::SIZE * Field::SIZE) - 1 && (i + 1) % 3 != 0 {
+                print!(", ");
+            }
+        }
+        println!();
+    }
+
     /// Starts a new game with a random player
     pub fn with_rand_player(rng: &mut StdRand) -> Self {
         if rng.next() % 2 == 0 {
@@ -74,6 +161,12 @@ impl Game {
     /// in the first turn.
     pub fn initial_move(&mut self, next_piece: Piece) -> Result<(), ()> {
         if let Status::InitialMove { starting_player } = self.status {
+            let i = self
+                .remaining_pieces()
+                .iter()
+                .position(|&x| x == next_piece)
+                .ok_or(())?;
+            self.remaining_pieces.remove(i);
             self.status = Status::Move {
                 next_player: starting_player.next(),
                 next_piece,
@@ -130,7 +223,9 @@ impl Game {
     /// Undo the latest move
     pub fn unmove(&mut self, last_pos: Pos) {
         let next_player = match self.status {
-            Status::InitialMove { .. } => panic!("Can't unmove an initial move"),
+            Status::InitialMove { .. } => {
+                panic!("Can't unmove an initial move, use unmove_initial!")
+            }
             Status::Won { winner } => winner,
             Status::Draw { last_player } => last_player,
             Status::Move { next_player, .. } => next_player,
@@ -152,6 +247,14 @@ impl Game {
                 next_player: prev_player,
             }
         };
+    }
+
+    pub fn unmove_initial(&mut self) {
+        assert!(
+            self.is_initial_move(),
+            "used unmove_initial to unmove non-initial move"
+        );
+        self.remaining_pieces = (0..16).map(Piece::new_with_props).collect();
     }
 }
 
