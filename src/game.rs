@@ -1,3 +1,5 @@
+use libafl::bolts::rands::{Rand, StdRand};
+
 use crate::{
     field::{Field, Pos},
     piece::Piece,
@@ -43,10 +45,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn remaining_pieces(&self) -> &[Piece] {
-        &self.remaining_pieces
-    }
-
+    /// Starts a new game
     pub fn new(starting_player: Player) -> Self {
         let remaining_pieces = (0..16).map(Piece::new_with_props).collect();
 
@@ -55,6 +54,20 @@ impl Game {
             field: Field::new(),
             status: Status::InitialMove { starting_player },
         }
+    }
+
+    /// Starts a new game with a random player
+    pub fn with_rand_player(rng: &mut StdRand) -> Self {
+        if rng.next() % 2 == 0 {
+            Self::new(Player::PlayerOne)
+        } else {
+            Self::new(Player::PlayerTwo)
+        }
+    }
+
+    /// Returns the list of remaining pieces
+    pub fn remaining_pieces(&self) -> &[Piece] {
+        &self.remaining_pieces
     }
 
     /// Gives the initial piece to the opponent, as we do not actually put a piece onto the field
@@ -139,5 +152,21 @@ impl Game {
                 next_player: prev_player,
             }
         };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Game, Player};
+
+    #[test]
+    fn test_move_unmove() {
+        let mut game = Game::new(Player::PlayerOne);
+        let post_unmove = game.field.clone();
+        game.initial_move(game.remaining_pieces()[0]).unwrap();
+        game.do_move((0, 0), game.remaining_pieces()[1]).unwrap();
+        assert_ne!(post_unmove, game.field);
+        game.unmove((0, 0));
+        assert_eq!(post_unmove, game.field);
     }
 }

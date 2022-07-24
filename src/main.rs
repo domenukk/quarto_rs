@@ -73,5 +73,5 @@ fn main() {
 
     field.put((0, 3), test_light_tall).unwrap();
 
-    field.pp()
+    field.pp();
 }

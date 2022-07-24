@@ -4,7 +4,7 @@ use crate::{
 };
 use libafl::bolts::rands::{Rand, RandomSeed, StdRand};
 
-type Score = usize;
+pub type Score = usize;
 
 #[allow(clippy::module_name_repetitions)]
 pub struct SimpleAi {
@@ -14,7 +14,7 @@ pub struct SimpleAi {
 }
 
 impl SimpleAi {
-    fn new(own_player: Player, depth: usize) -> Self {
+    pub fn new(own_player: Player, depth: usize) -> Self {
         Self {
             depth,
             rng: StdRand::new(),
@@ -22,12 +22,12 @@ impl SimpleAi {
         }
     }
 
-    fn play(&mut self, game: &Game) -> Game {
+    pub fn play(&mut self, game: &Game) -> Game {
         // TODO, do something with score.
         self.play_rec(game, self.depth).0
     }
 
-    fn play_rec(&mut self, game: &Game, depth: usize) -> (Game, Score) {
+    pub fn play_rec(&mut self, game: &Game, depth: usize) -> (Game, Score) {
         let mut next_game: Game = game.clone();
         if depth == 0 {
             return (next_game, 0);

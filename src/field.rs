@@ -1,8 +1,6 @@
-use std::iter::Enumerate;
-
 use crate::piece::Piece;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct Field {
     // The field of a quarto game.
     field: [[Option<Piece>; Self::SIZE]; Self::SIZE],
