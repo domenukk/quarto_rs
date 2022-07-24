@@ -180,12 +180,28 @@ impl Game {
     /// Next move, actually put a piece on the field, and give the next piece to the opponent or
     /// checks if a player won..
     pub fn do_move(&mut self, pos: Pos, next_piece: Piece) -> Result<(), ()> {
+        // Grab the curent move that the player wants to execute
         if let Status::Move {
             next_player: player,
             next_piece: piece,
         } = self.status
         {
+            // Actually perform the move on the field.
             self.field.put(pos, piece)?;
+
+            if self.remaining_pieces().len() == 0 {
+                // This is a draw
+                self.status = Status::Draw {last_player: player};
+                return Ok(());
+            }
+            // remove the piece from `remaining_pieces`.
+            let i = self
+                .remaining_pieces()
+                .iter()
+                .position(|&x| x == next_piece)
+                .ok_or(())?;
+            self.remaining_pieces.remove(i);
+            // Check if this piece yielded a win for this player.
             if self.field.check_field_for_win() {
                 self.status = Status::Won { winner: player }
             } else {

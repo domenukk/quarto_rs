@@ -1,8 +1,10 @@
 use crate::{
     field::Pos,
     game::{Game, Player, Status},
+    piece::Piece,
 };
 use libafl::bolts::rands::{Rand, RandomSeed, StdRand};
+use std::collections::HashSet;
 
 pub type Score = usize;
 
@@ -73,5 +75,196 @@ impl SimpleAi {
             Status::Won { winner } => (next_game, if winner == self.own_player { 10 } else { 0 }),
             Status::Draw { .. } => (next_game, 5),
         }
+    }
+
+    /// Tries to play the game iteratively, searching for a locally optimal move
+    /// Strategy:
+    ///     We are given a piece by the opponent, we will then caluclate all states that are
+    ///     immediatley reachable and check if they fulfill the winning condition.
+    ///     If they do not fulfill the winning condition, we will all put them in a map here.
+    ///     Then we will check the remaining pieces and find pieces that do *not* yield an
+    ///     immediate win to the opponent, then for all of those pieces, we will need to
+    ///     calculate all possible winning states, then try to maximize the number of winning
+    ///     states that are reachable, this contributes to the "score" we will give this path.
+    ///     The more winning pieces that there are, the more likely we will win?.
+    pub fn play_iteratively(&mut self, game: &mut Game) -> Result<Game, ()> {
+        let it = std::time::Instant::now();
+
+        // our theoretical game
+        let t_game = game.clone();
+
+        // Check the piece given to us, by our opponent, and get all empty spaces on the field.
+        match game.status {
+            // If we have the initial move, just pick a random piece.
+            Status::InitialMove {
+                starting_player: player,
+            } => {
+                assert!(self.own_player == player);
+                #[cfg(feature = "ai_reasoning")]
+                println!("AI: Does not matter which piece we pick on the initial move.");
+                // return a random piece from `remaining_pieces`
+                let rand_val = self.rng.next() % game.remaining_pieces().len() as u64;
+                let random_piece = game.remaining_pieces()[rand_val as usize];
+                game.initial_move(random_piece).unwrap();
+                return Ok(game.clone());
+            }
+            Status::Move {
+                next_player: next_player,
+                next_piece: our_piece,
+            } => {
+                // This is where the interesting stuff happens.
+
+                // Grab the empty spaces.
+                let empty_spaces = t_game.field.empty_spaces();
+                #[cfg(feature = "ai_reasoning")]
+                println!(
+                    "AI: There are {} empty spaces for us to put our piece on",
+                    empty_spaces.len()
+                );
+
+                let mut states: Vec<(Game, Pos)> = Vec::new();
+
+                for pos in empty_spaces {
+                    // Construct all states.
+                    let mut state = t_game.clone();
+                    state
+                        .field
+                        .put(pos, our_piece)
+                        .expect("Huh? AI should only do legal moves.");
+
+                    // Check if any of these moves are winning.
+                    if state.field.check_field_for_win() {
+                        // Do early return here.
+                        // next piece can be randomly chosen, as we will win this turn.
+                        let mut new_game = game.clone();
+                        let next_piece = if game.remaining_pieces().len() != 0 {
+                            game.remaining_pieces()[0]
+                        } else {
+                            our_piece
+                        };
+                        new_game
+                            .do_move(pos, next_piece)
+                            .expect("Ai should only do legal moves");
+                        return Ok(new_game);
+                    }
+
+                    states.push((state, pos));
+                }
+
+                #[cfg(feature = "ai_reasoning")]
+                println!("AI: We have {} states for our move", states.len());
+
+                // This tracks which states we will remove after we calculate for the adversary.
+                let mut removals = Vec::new();
+
+                // This tracks the pieces, we should not pick, i.e. they allow the opponent to win.
+                let mut non_picks = HashSet::new();
+
+                // None of these states win immediately, try to check if any of the remaining
+                // pieces will let the opponent win.
+                for (state_idx, (state, our_pos)) in states.iter().enumerate() {
+                    // This is the piece we will give to our opponent.
+                    for piece in state.remaining_pieces() {
+                        // Perform all the moves our opponent could do with this piece.
+                        for pos in state.field.empty_spaces() {
+                            // Grab a clone
+                            let mut new_state = state.clone();
+                            // Perform the move
+                            let res = new_state
+                                .field
+                                .put(pos, *piece)
+                                .expect("huh ai should only do legal moves!");
+
+                            // Check if any of these moves are winning.
+                            if new_state.field.check_field_for_win() {
+                                #[cfg(feature = "ai_reasoning")]
+                                println!("Piece: {:?} will let opponent win on pos {:?} if we place ours({:?}) on {:?}", piece, pos, our_piece, our_pos);
+                                // remove these states from the states vector.
+                                removals.push(state_idx);
+                                // Add the piece to the non_picks.
+                                non_picks.insert(piece);
+                            }
+                        }
+                    }
+                }
+
+                let remaining_pieces = HashSet::from_iter(game.remaining_pieces().iter());
+                #[cfg(feature = "ai_reasoning")]
+                println!("AI: Game has {} remaining pieces", remaining_pieces.len());
+                #[cfg(feature = "ai_reasoning")]
+                println!(
+                    "AI: We have {} pieces that we want to avoid",
+                    non_picks.len()
+                );
+
+                let potential_picks: Vec<Piece> = remaining_pieces
+                    .difference(&non_picks)
+                    .map(|x| **x)
+                    .collect();
+
+                #[cfg(feature = "ai_reasoning")]
+                println!("AI: calculated all states that we can put things on without or opponent immediately winning after {:.4} us", it.elapsed().as_micros());
+
+                // This means, our opponent will definitely win next round or it is a draw :(
+                // Just shortcut and pick any piece.
+                if potential_picks.is_empty() {
+                    #[cfg(feature = "ai_reasoning")]
+                    println!("AI: Loss is imminent, just give a random piece");
+                    if game.remaining_pieces().len() == 0 {
+                        // This will be a draw.
+                        game.do_move(states[0].1, our_piece).unwrap();
+                        return Ok(game.clone());
+                    }
+                    let rand_val = self.rng.next() % game.remaining_pieces().len() as u64;
+                    let random_piece = game.remaining_pieces()[rand_val as usize];
+                    game.do_move(states[0].1, random_piece).unwrap();
+                    return Ok(game.clone());
+                }
+                //let potential_picks = Vec::from(potential_picks);
+
+                let rand_val = self.rng.next() % potential_picks.len() as u64;
+                let random_potential_pick = potential_picks[rand_val as usize];
+
+                // remove the states we do not want, i.e. the next move will let our opponent win.
+                let mut states: Vec<(Game, Pos)> = states
+                    .iter()
+                    .enumerate()
+                    // Get all states, which do not want to remove
+                    // This value is the idx.
+                    .filter(|(idx, _)| !removals.contains(&idx))
+                    // Map to the state and pos
+                    .map(|(_, state_pos)| state_pos)
+                    .cloned()
+                    .collect();
+
+                // Oh no! we cannot avoid a game loss here. Just return.
+                if states.len() == 0 {
+                    #[cfg(feature = "ai_reasoning")]
+                    println!("AI: We will lose on the next move, wherever we place our piece and whichever piece we select! :<");
+                    // return a random piece from `remaining_pieces`
+                    let rand_val = self.rng.next() % game.remaining_pieces().len() as u64;
+                    let random_piece = game.remaining_pieces()[rand_val as usize];
+
+                    let rand_val = self.rng.next() % game.field.empty_spaces().len() as u64;
+                    let random_pos = game.field.empty_spaces()[rand_val as usize];
+                    game.do_move(random_pos, random_piece).unwrap();
+                    return Ok(game.clone());
+                }
+
+                // Pick a random state from this list for now.
+                let rand_val = self.rng.next() % states.len() as u64;
+
+                // Grab the best move and then construct the new game.
+                game.do_move(states[rand_val as usize].1, random_potential_pick)
+                    .expect("ai should only do legal moves!");
+                return Ok(game.clone());
+            }
+            // On won and draw.
+            _ => {
+                unreachable!("Game should just terminate here.");
+            }
+        }
+
+        Err(())
     }
 }

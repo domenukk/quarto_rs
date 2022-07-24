@@ -1,7 +1,7 @@
 use std::fmt::Formatter;
 
 /// A quarto piece.
-#[derive(Default, PartialEq, Eq, Copy, Clone)]
+#[derive(Default, PartialEq, Eq, Copy, Clone, Hash, Ord, PartialOrd)]
 pub struct Piece {
     pub properties: u8,
 }
@@ -30,7 +30,9 @@ impl Piece {
     #[must_use]
     pub const fn new_with_props(props: u8) -> Self {
         assert!(props >> 4 == 0, "top bits should be clear");
-        let props = props & !(props << 4);
+        let props = props | ((!props) << 4);
+
+        assert!(props >> 4 & props == 0);
         Piece { properties: props }
     }
 
@@ -106,5 +108,19 @@ impl Piece {
             print!("⭕");
         }
         print!("]");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::piece::{Piece, Property};
+
+    const TEST_LIGHT_TALL: Piece =
+        Piece::new_with_props(Property::Tall as u8 | Property::Light as u8);
+
+    #[test]
+    fn test_repr() {
+        // Test the binary representation of a piece.
+        assert!(TEST_LIGHT_TALL.properties == 0b_0110_1001);
     }
 }

@@ -51,9 +51,10 @@ Welcome to `quarto_rs`
 use std::io;
 
 use field::Pos;
-use game::{Game, Player};
+use game::{Game, Player, Status};
 
 use crate::{
+    ai::SimpleAi,
     field::{try_parse_pos, Field},
     piece::{Piece, Property},
 };
@@ -62,6 +63,7 @@ mod ai;
 mod field;
 mod game;
 mod piece;
+mod rng;
 
 fn main() {
     /*let test_light_tall: Piece =
@@ -80,10 +82,16 @@ fn main() {
 
     field.pp();*/
 
+    ai_wars();
+
+    return;
+
     let mut game = Game::new(Player::PlayerOne);
 
     let stdin = io::stdin();
     let mut buf = String::new();
+
+    let mut ai = SimpleAi::new(Player::PlayerTwo, 1);
 
     println!("Let the games begin!");
 
@@ -93,45 +101,94 @@ fn main() {
             return;
         }
 
-        let piece_id: usize = loop {
-            println!(
-                "{:?}, please chose the id of the next piece:",
-                game.player()
-            );
-            buf.clear();
-            stdin.read_line(&mut buf).unwrap();
-            let num = buf.trim().parse();
-            if let Ok(num) = num {
-                if num < game.remaining_pieces().len() {
-                    break num;
-                }
-            }
-            #[cfg(debug_assertions)]
-            println!("{} (str: {})", num.err().unwrap(), &buf);
-            println!(
-                "Illegal choice: {}, please pick the id of a remaining piece:",
-                buf
-            );
-            game.pp_remaining_pieces();
-        };
-        let next_piece = game.remaining_pieces()[piece_id];
-
-        if game.is_initial_move() {
-            game.initial_move(next_piece).unwrap();
-        } else {
-            loop {
-                println!("Select x,y to put the place to:");
+        if game.player() == Player::PlayerOne {
+            let piece_id: usize = loop {
+                println!(
+                    "{:?}, please chose the id of the next piece:",
+                    game.player()
+                );
                 buf.clear();
                 stdin.read_line(&mut buf).unwrap();
-                let pos = try_parse_pos(&buf);
-                if let Ok(pos) = pos {
-                    if game.do_move(pos, next_piece).is_ok() {
-                        break;
+                let num = buf.trim().parse();
+                if let Ok(num) = num {
+                    if num < game.remaining_pieces().len() {
+                        break num;
                     }
                 }
-                println!("Illegal move! The x,y value must be an empty place on the field!");
+                #[cfg(debug_assertions)]
+                println!("{} (str: {})", num.err().unwrap(), &buf);
+                println!(
+                    "Illegal choice: {}, please pick the id of a remaining piece:",
+                    buf
+                );
+                game.pp_remaining_pieces();
+            };
+            let next_piece = game.remaining_pieces()[piece_id];
+
+            if game.is_initial_move() {
+                game.initial_move(next_piece).unwrap();
+            } else {
+                loop {
+                    println!("Select x,y to put the place to:");
+                    buf.clear();
+                    stdin.read_line(&mut buf).unwrap();
+                    let pos = try_parse_pos(&buf);
+                    if let Ok(pos) = pos {
+                        if game.do_move(pos, next_piece).is_ok() {
+                            break;
+                        }
+                    }
+                    println!("Illegal move! The x,y value must be an empty place on the field!");
+                }
+            }
+            println!();
+        } else {
+            game = ai.play_iteratively(&mut game).expect("AI should not fail!");
+        }
+    }
+}
+
+fn ai_wars() {
+    let it = std::time::Instant::now();
+    const ITERS: usize = 10_000;
+
+    let mut ai_one_wins = 0;
+    let mut ai_two_wins = 0;
+    let mut turns = 0;
+
+    'outer: for _ in 0..ITERS {
+        let mut game = Game::new(Player::PlayerOne);
+
+        let mut ai_one = SimpleAi::new(Player::PlayerOne, 1);
+        let mut ai_two = SimpleAi::new(Player::PlayerTwo, 1);
+
+        loop {
+            //game.pp();
+            if !game.running() {
+                if let Status::Won { winner } = game.status {
+                    if winner == Player::PlayerOne {
+                        ai_one_wins += 1;
+                    } else {
+                        ai_two_wins += 1;
+                    }
+                }
+                turns += game.round();
+                continue 'outer;
+            }
+
+            if game.player() == Player::PlayerOne {
+                game = ai_one.play_iteratively(&mut game).expect("AI should not fail!");
+            } else {
+                game = ai_two.play_iteratively(&mut game).expect("AI should not fail!");
             }
         }
-        println!();
     }
+
+    let elapsed = it.elapsed();
+
+    println!("Did {} games in {} seconds({:05.3} games/sec)", ITERS, elapsed.as_secs(), ITERS as f64 / (elapsed.as_secs() as f64));
+    println!("Did {} turns in total, average of {} turns per game", turns, turns as f64 / ITERS as f64);
+    println!("PlayerOne had {} wins({}%), PlayerTwo had {} wins({}%).", ai_one_wins, (ai_one_wins as f64 / ITERS as f64) * 100., ai_two_wins, (ai_two_wins as f64 / ITERS as f64) * 100.);
+    let mut draws = ITERS - ai_one_wins - ai_two_wins;
+    println!("We had {} draws ({}%)", draws, (draws as f64 / ITERS as f64) * 100.);
 }

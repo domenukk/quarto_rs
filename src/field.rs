@@ -27,8 +27,8 @@ impl Field {
     }
 
     pub fn put(&mut self, pos: Pos, piece: Piece) -> Result<(), ()> {
-        if self.field[pos.0][pos.1].is_none() {
-            self.field[pos.0][pos.1] = Some(piece);
+        if self.field[pos.1][pos.0].is_none() {
+            self.field[pos.1][pos.0] = Some(piece);
             return Ok(());
         }
         Err(())
@@ -72,6 +72,7 @@ impl Field {
             return true;
         }
 
+        #[cfg(feature = "square_mode")]
         for i in 0..(Self::SIZE - 1) {
             let mut flattened_square = [None; 4];
             for k in 0..(Self::SIZE - 1) {
@@ -114,7 +115,7 @@ impl Field {
 
         for x in 0..Self::SIZE {
             for y in 0..Self::SIZE {
-                if self.field[x][y].is_none() {
+                if self.field[y][x].is_none() {
                     ret.push((x, y));
                 }
             }
@@ -153,8 +154,11 @@ mod tests {
     const TEST_LIGHT_TALL: Piece =
         Piece::new_with_props(Property::Tall as u8 | Property::Light as u8);
     const TEST_DARK_SHORT: Piece = Piece::new();
+    const TEST_SHORT_FULL_DARK_CIRCLE: Piece =
+        Piece::new_with_props(Property::Full as u8 | Property::Round as u8);
 
     #[test]
+    #[cfg(feature = "square_mode")]
     fn test_squares() {
         let mut field = Field::new();
 
@@ -170,6 +174,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "square_mode")]
     fn test_wrong_prop_square() {
         let mut field = Field::new();
 
@@ -178,10 +183,11 @@ mod tests {
         field.put((1, 0), TEST_LIGHT_TALL).unwrap();
         field.put((1, 1), TEST_LIGHT_TALL).unwrap();
 
-        assert!(!field.check_field_for_win());
+        assert!(field.check_field_for_win());
     }
 
     #[test]
+    #[cfg(feature = "square_mode")]
     fn test_different_square() {
         let mut field = Field::new();
 
@@ -220,7 +226,7 @@ mod tests {
 
         field.put((0, 3), TEST_LIGHT_TALL).unwrap();
 
-        assert!(!field.check_field_for_win());
+        assert!(field.check_field_for_win());
     }
 
     #[test]
@@ -250,7 +256,7 @@ mod tests {
 
         field.put((3, 0), TEST_LIGHT_TALL).unwrap();
 
-        assert!(!field.check_field_for_win());
+        assert!(field.check_field_for_win());
     }
 
     #[test]
@@ -269,7 +275,7 @@ mod tests {
     }
 
     #[test]
-    fn test_wrong_prop_diag() {
+    fn test_prop_diag_two() {
         let mut field = Field::new();
 
         field.put((0, 0), TEST_LIGHT_TALL).unwrap();
@@ -279,6 +285,21 @@ mod tests {
         assert!(!field.check_field_for_win());
 
         field.put((3, 3), TEST_LIGHT_TALL).unwrap();
+
+        assert!(field.check_field_for_win());
+    }
+
+    #[test]
+    fn test_wrong_prop_diag() {
+        let mut field = Field::new();
+
+        field.put((0, 0), TEST_LIGHT_TALL).unwrap();
+        field.put((1, 1), TEST_LIGHT_TALL).unwrap();
+        field.put((2, 2), TEST_DARK_SHORT).unwrap();
+
+        assert!(!field.check_field_for_win());
+
+        field.put((3, 3), TEST_SHORT_FULL_DARK_CIRCLE).unwrap();
 
         assert!(!field.check_field_for_win());
     }
