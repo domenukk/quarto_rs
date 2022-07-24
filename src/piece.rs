@@ -51,9 +51,11 @@ impl Piece {
     pub fn pp_write(self, f: &mut Formatter) -> std::fmt::Result {
         f.write_str("[")?;
         if self.get(Property::Tall) {
-            f.write_str("⬆️")?;
+            f.write_str("✋")?;
+            //f.write_str("⬆️")?;
         } else {
-            f.write_str("⬇️")?;
+            f.write_str("🤏")?;
+            //f.write_str("⬇️")?;
         }
         if self.get(Property::Round) {
             f.write_str("🟠")?;
@@ -66,9 +68,11 @@ impl Piece {
             f.write_str("⭕")?;
         }
         if self.get(Property::Light) {
+            //f.write_str("🏳️")?;
             f.write_str("⬜")?;
         } else {
-            f.write_str("⬛")?;
+            f.write_str("🏴")?;
+            //f.write_str("⬛")?;
         }
         f.write_str("]")
     }
@@ -77,13 +81,17 @@ impl Piece {
     pub fn pp(self) {
         print!("[");
         if self.get(Property::Tall) {
-            print!("⬆️");
+            print!("✋");
+            //print!("️⬆️");
         } else {
-            print!("⬇️");
+            print!("🤏");
+            //print!("⬇️");
         }
         if self.get(Property::Light) {
+            //print!("🏳️");
             print!("⬜");
         } else {
+            //print!("🏴");
             print!("⬛");
         }
         if self.get(Property::Round) {

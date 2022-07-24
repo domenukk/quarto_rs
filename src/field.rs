@@ -114,16 +114,16 @@ impl Field {
 
     pub fn pp(&self) {
         for (i, row) in (&self.field).iter().enumerate() {
-            for (_k, val) in (row).iter().enumerate() {
-                if i == 0 {
-                    println!("\n ------   -------   ------   ------- ");
-                } else if i < Self::SIZE - 1 {
+            for (k, val) in (row).iter().enumerate() {
+                if k == 0 {
+                    println!("\n---------   ---------   ---------   ---------");
+                } else if k < Self::SIZE {
                     print!(" | ");
                 }
                 if let Some(val) = val {
                     val.pp();
                 } else {
-                    print!("      ");
+                    print!("         ");
                 }
             }
         }
