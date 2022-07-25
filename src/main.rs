@@ -177,18 +177,41 @@ fn ai_wars() {
             }
 
             if game.player() == Player::PlayerOne {
-                game = ai_one.play_iteratively(&mut game).expect("AI should not fail!");
+                game = ai_one
+                    .play_iteratively(&mut game)
+                    .expect("AI should not fail!");
             } else {
-                game = ai_two.play_iteratively(&mut game).expect("AI should not fail!");
+                game = ai_two
+                    .play_iteratively(&mut game)
+                    .expect("AI should not fail!");
             }
         }
     }
 
     let elapsed = it.elapsed();
 
-    println!("Did {} games in {} seconds({:05.3} games/sec)", ITERS, elapsed.as_secs(), ITERS as f64 / (elapsed.as_secs() as f64));
-    println!("Did {} turns in total, average of {} turns per game", turns, turns as f64 / ITERS as f64);
-    println!("PlayerOne had {} wins({}%), PlayerTwo had {} wins({}%).", ai_one_wins, (ai_one_wins as f64 / ITERS as f64) * 100., ai_two_wins, (ai_two_wins as f64 / ITERS as f64) * 100.);
+    println!(
+        "Did {} games in {} seconds({:05.3} games/sec)",
+        ITERS,
+        elapsed.as_secs(),
+        ITERS as f64 / (elapsed.as_secs() as f64)
+    );
+    println!(
+        "Did {} turns in total, average of {} turns per game",
+        turns,
+        turns as f64 / ITERS as f64
+    );
+    println!(
+        "PlayerOne had {} wins({}%), PlayerTwo had {} wins({}%).",
+        ai_one_wins,
+        (ai_one_wins as f64 / ITERS as f64) * 100.,
+        ai_two_wins,
+        (ai_two_wins as f64 / ITERS as f64) * 100.
+    );
     let mut draws = ITERS - ai_one_wins - ai_two_wins;
-    println!("We had {} draws ({}%)", draws, (draws as f64 / ITERS as f64) * 100.);
+    println!(
+        "We had {} draws ({}%)",
+        draws,
+        (draws as f64 / ITERS as f64) * 100.
+    );
 }

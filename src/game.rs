@@ -191,7 +191,9 @@ impl Game {
 
             if self.remaining_pieces().len() == 0 {
                 // This is a draw
-                self.status = Status::Draw {last_player: player};
+                self.status = Status::Draw {
+                    last_player: player,
+                };
                 return Ok(());
             }
             // remove the piece from `remaining_pieces`.
