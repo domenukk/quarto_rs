@@ -1,27 +1,34 @@
-use std::cell::Cell;
-
-/// XorShift64
-pub struct X64 {
-    state: Cell<u64>,
+/// Taken from <https://github.com/AFLplusplus/LibAFL/blob/main/libafl/src/bolts/rands.rs>
+#[derive(Copy, Clone, Debug)]
+pub struct RomuDuoJrRand {
+    x_state: u64,
+    y_state: u64,
 }
 
-impl X64 {
-    pub fn new(seed: u64) -> Self {
-        Self {
-            state: Cell::new(seed),
-        }
+impl RomuDuoJrRand {
+    /// Creates a new `RomuDuoJrRand` with the given seed.
+    #[must_use]
+    pub fn with_seed(seed: u64) -> Self {
+        let mut rand = Self {
+            x_state: 0,
+            y_state: 0,
+        };
+        rand.set_seed(seed);
+        rand
     }
 
-    pub fn get_rand(&self) -> u64 {
-        let mut x = self.state.get();
+    fn set_seed(&mut self, seed: u64) {
+        self.x_state = seed ^ 0x12345;
+        self.y_state = seed ^ 0x6789A;
+    }
 
-        x ^= x << 13;
-        x ^= x >> 7;
-        x ^= x << 17;
-
-        self.state.set(x);
-
-        return x;
+    #[inline]
+    #[allow(clippy::unreadable_literal)]
+    pub fn next(&mut self) -> u64 {
+        let xp = self.x_state;
+        self.x_state = 15241094284759029579_u64.wrapping_mul(self.y_state);
+        self.y_state = self.y_state.wrapping_sub(xp).rotate_left(27);
+        xp
     }
 }
 
@@ -29,9 +36,9 @@ impl X64 {
 mod tests {
     #[test]
     fn test_rng() {
-        use crate::rng::X64;
-        let rng = X64::new(13371339);
+        use crate::rng::RomuDuoJrRand;
+        let rng = RomuDuoJrRand::with_seed(13371339);
 
-        let _ = rng.get_rand();
+        let _ = rng.next();
     }
 }

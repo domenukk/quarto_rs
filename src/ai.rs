@@ -48,7 +48,7 @@ impl SimpleAi {
             }
             Status::Move {
                 next_player: player,
-                next_piece: piece,
+                next_piece: _,
             } => {
                 if player == self.own_player {
                     let possible_spaces: Vec<Pos> = game.field.empty_spaces();
@@ -56,7 +56,7 @@ impl SimpleAi {
 
                     // We calculate if we will win for every possible place, that is still free and
                     // where we can place our current_piece.
-                    for pos in possible_spaces {
+                    for _pos in possible_spaces {
                         // We will also have to calculate the optimal piece to give to our
                         // opponent, which is the piece with the least likely chance of winning.
                         for next_piece in game.remaining_pieces() {
@@ -87,9 +87,8 @@ impl SimpleAi {
     ///     calculate all possible winning states, then try to maximize the number of winning
     ///     states that are reachable, this contributes to the "score" we will give this path.
     ///     The more winning pieces that there are, the more likely we will win?.
-    pub fn play_iteratively(&mut self, game: &mut Game) -> Result<Game, ()> {
-        let it = std::time::Instant::now();
-
+    #[allow(clippy::too_many_lines)]
+    pub fn play_iteratively(&mut self, game: &mut Game) -> Game {
         // our theoretical game
         let t_game = game.clone();
 
@@ -104,12 +103,13 @@ impl SimpleAi {
                 println!("AI: Does not matter which piece we pick on the initial move.");
                 // return a random piece from `remaining_pieces`
                 let rand_val = self.rng.next() % game.remaining_pieces().len() as u64;
+                #[allow(clippy::cast_possible_truncation)]
                 let random_piece = game.remaining_pieces()[rand_val as usize];
                 game.initial_move(random_piece).unwrap();
-                return Ok(game.clone());
+                game.clone()
             }
             Status::Move {
-                next_player: next_player,
+                next_player: _,
                 next_piece: our_piece,
             } => {
                 // This is where the interesting stuff happens.
@@ -137,15 +137,15 @@ impl SimpleAi {
                         // Do early return here.
                         // next piece can be randomly chosen, as we will win this turn.
                         let mut new_game = game.clone();
-                        let next_piece = if game.remaining_pieces().len() != 0 {
-                            game.remaining_pieces()[0]
-                        } else {
+                        let next_piece = if game.remaining_pieces().is_empty() {
                             our_piece
+                        } else {
+                            game.remaining_pieces()[0]
                         };
                         new_game
                             .do_move(pos, next_piece)
                             .expect("Ai should only do legal moves");
-                        return Ok(new_game);
+                        return new_game;
                     }
 
                     states.push((state, pos));
@@ -162,7 +162,7 @@ impl SimpleAi {
 
                 // None of these states win immediately, try to check if any of the remaining
                 // pieces will let the opponent win.
-                for (state_idx, (state, our_pos)) in states.iter().enumerate() {
+                for (state_idx, (state, _our_pos)) in states.iter().enumerate() {
                     // This is the piece we will give to our opponent.
                     for piece in state.remaining_pieces() {
                         // Perform all the moves our opponent could do with this piece.
@@ -170,7 +170,7 @@ impl SimpleAi {
                             // Grab a clone
                             let mut new_state = state.clone();
                             // Perform the move
-                            let res = new_state
+                            new_state
                                 .field
                                 .put(pos, *piece)
                                 .expect("huh ai should only do legal moves!");
@@ -188,7 +188,7 @@ impl SimpleAi {
                     }
                 }
 
-                let remaining_pieces = HashSet::from_iter(game.remaining_pieces().iter());
+                let remaining_pieces = game.remaining_pieces().iter().collect::<HashSet<_>>();
                 #[cfg(feature = "ai_reasoning")]
                 println!("AI: Game has {} remaining pieces", remaining_pieces.len());
                 #[cfg(feature = "ai_reasoning")]
@@ -210,61 +210,65 @@ impl SimpleAi {
                 if potential_picks.is_empty() {
                     #[cfg(feature = "ai_reasoning")]
                     println!("AI: Loss is imminent, just give a random piece");
-                    if game.remaining_pieces().len() == 0 {
+                    if game.remaining_pieces().is_empty() {
                         // This will be a draw.
                         game.do_move(states[0].1, our_piece).unwrap();
-                        return Ok(game.clone());
+                        return game.clone();
                     }
                     let rand_val = self.rng.next() % game.remaining_pieces().len() as u64;
+                    #[allow(clippy::cast_possible_truncation)]
                     let random_piece = game.remaining_pieces()[rand_val as usize];
                     game.do_move(states[0].1, random_piece).unwrap();
-                    return Ok(game.clone());
+                    return game.clone();
                 }
                 //let potential_picks = Vec::from(potential_picks);
 
+                #[allow(clippy::cast_possible_truncation)]
                 let rand_val = self.rng.next() % potential_picks.len() as u64;
+                #[allow(clippy::cast_possible_truncation)]
                 let random_potential_pick = potential_picks[rand_val as usize];
 
                 // remove the states we do not want, i.e. the next move will let our opponent win.
-                let mut states: Vec<(Game, Pos)> = states
+                let states: Vec<(Game, Pos)> = states
                     .iter()
                     .enumerate()
                     // Get all states, which do not want to remove
                     // This value is the idx.
-                    .filter(|(idx, _)| !removals.contains(&idx))
+                    .filter(|(idx, _)| !removals.contains(idx))
                     // Map to the state and pos
                     .map(|(_, state_pos)| state_pos)
                     .cloned()
                     .collect();
 
                 // Oh no! we cannot avoid a game loss here. Just return.
-                if states.len() == 0 {
+                if states.is_empty() {
                     #[cfg(feature = "ai_reasoning")]
                     println!("AI: We will lose on the next move, wherever we place our piece and whichever piece we select! :<");
                     // return a random piece from `remaining_pieces`
                     let rand_val = self.rng.next() % game.remaining_pieces().len() as u64;
+                    #[allow(clippy::cast_possible_truncation)]
                     let random_piece = game.remaining_pieces()[rand_val as usize];
 
                     let rand_val = self.rng.next() % game.field.empty_spaces().len() as u64;
+                    #[allow(clippy::cast_possible_truncation)]
                     let random_pos = game.field.empty_spaces()[rand_val as usize];
                     game.do_move(random_pos, random_piece).unwrap();
-                    return Ok(game.clone());
+                    return game.clone();
                 }
 
                 // Pick a random state from this list for now.
                 let rand_val = self.rng.next() % states.len() as u64;
 
                 // Grab the best move and then construct the new game.
+                #[allow(clippy::cast_possible_truncation)]
                 game.do_move(states[rand_val as usize].1, random_potential_pick)
                     .expect("ai should only do legal moves!");
-                return Ok(game.clone());
+                game.clone()
             }
             // On won and draw.
             _ => {
                 unreachable!("Game should just terminate here.");
             }
         }
-
-        Err(())
     }
 }

@@ -50,14 +50,9 @@ Welcome to `quarto_rs`
 
 use std::io;
 
-use field::Pos;
 use game::{Game, Player, Status};
 
-use crate::{
-    ai::SimpleAi,
-    field::{try_parse_pos, Field},
-    piece::{Piece, Property},
-};
+use crate::{ai::SimpleAi, field::try_parse_pos};
 
 mod ai;
 mod field;
@@ -143,14 +138,16 @@ fn main() {
             }
             println!();
         } else {
-            game = ai.play_iteratively(&mut game).expect("AI should not fail!");
+            game = ai.play_iteratively(&mut game);
         }
     }
 }
 
+#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn ai_wars() {
-    let it = std::time::Instant::now();
     const ITERS: usize = 10_000;
+
+    let it = std::time::Instant::now();
 
     let mut ai_one_wins = 0;
     let mut ai_two_wins = 0;
@@ -177,13 +174,9 @@ fn ai_wars() {
             }
 
             if game.player() == Player::PlayerOne {
-                game = ai_one
-                    .play_iteratively(&mut game)
-                    .expect("AI should not fail!");
+                game = ai_one.play_iteratively(&mut game);
             } else {
-                game = ai_two
-                    .play_iteratively(&mut game)
-                    .expect("AI should not fail!");
+                game = ai_two.play_iteratively(&mut game);
             }
         }
     }
@@ -208,10 +201,8 @@ fn ai_wars() {
         ai_two_wins,
         (ai_two_wins as f64 / ITERS as f64) * 100.
     );
-    let mut draws = ITERS - ai_one_wins - ai_two_wins;
-    println!(
-        "We had {} draws ({}%)",
-        draws,
-        (draws as f64 / ITERS as f64) * 100.
-    );
+    let draws = ITERS - ai_one_wins - ai_two_wins;
+    let draw_percentage = (draws as f64 / ITERS as f64) * 100.;
+
+    println!("We had {} draws ({}%)", draws, draw_percentage,);
 }

@@ -189,7 +189,7 @@ impl Game {
             // Actually perform the move on the field.
             self.field.put(pos, piece)?;
 
-            if self.remaining_pieces().len() == 0 {
+            if self.remaining_pieces().is_empty() {
                 // This is a draw
                 self.status = Status::Draw {
                     last_player: player,
