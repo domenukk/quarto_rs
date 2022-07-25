@@ -35,13 +35,13 @@ impl Field {
     }
 
     pub fn get(&self, pos: Pos) -> Option<Piece> {
-        self.field[pos.0][pos.1]
+        self.field[pos.1][pos.0]
     }
 
     /// Clear at a position, returning the current piece at this point
     pub fn clear(&mut self, pos: Pos) -> Option<Piece> {
         let ret = self.get(pos);
-        self.field[pos.0][pos.1] = None;
+        self.field[pos.1][pos.0] = None;
         ret
     }
 
