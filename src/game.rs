@@ -145,11 +145,7 @@ impl Game {
 
     /// Starts a new game with a random player
     pub fn with_rand_player(rng: &mut StdRand) -> Self {
-        if rng.next() % 2 == 0 {
-            Self::new(Player::PlayerOne)
-        } else {
-            Self::new(Player::PlayerTwo)
-        }
+        Self::new(rng.choose([Player::PlayerOne, Player::PlayerTwo]))
     }
 
     /// Returns the list of remaining pieces

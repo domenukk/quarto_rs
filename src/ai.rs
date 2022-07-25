@@ -36,9 +36,7 @@ impl SimpleAi {
         }
         match game.status {
             Status::InitialMove { starting_player } => {
-                let rand_val = self.rng.next() % next_game.remaining_pieces().len() as u64;
-                #[allow(clippy::cast_possible_truncation)]
-                let piece = next_game.remaining_pieces()[rand_val as usize];
+                let piece = *self.rng.choose(next_game.remaining_pieces());
                 next_game.status = Status::Move {
                     next_player: starting_player.next(),
                     next_piece: piece,
@@ -102,9 +100,7 @@ impl SimpleAi {
                 #[cfg(feature = "ai_reasoning")]
                 println!("AI: Does not matter which piece we pick on the initial move.");
                 // return a random piece from `remaining_pieces`
-                let rand_val = self.rng.next() % game.remaining_pieces().len() as u64;
-                #[allow(clippy::cast_possible_truncation)]
-                let random_piece = game.remaining_pieces()[rand_val as usize];
+                let random_piece = *self.rng.choose(game.remaining_pieces());
                 game.initial_move(random_piece).unwrap();
                 game.clone()
             }
@@ -215,18 +211,13 @@ impl SimpleAi {
                         game.do_move(states[0].1, our_piece).unwrap();
                         return game.clone();
                     }
-                    let rand_val = self.rng.next() % game.remaining_pieces().len() as u64;
-                    #[allow(clippy::cast_possible_truncation)]
-                    let random_piece = game.remaining_pieces()[rand_val as usize];
+                    let random_piece = *self.rng.choose(game.remaining_pieces());
                     game.do_move(states[0].1, random_piece).unwrap();
                     return game.clone();
                 }
                 //let potential_picks = Vec::from(potential_picks);
 
-                #[allow(clippy::cast_possible_truncation)]
-                let rand_val = self.rng.next() % potential_picks.len() as u64;
-                #[allow(clippy::cast_possible_truncation)]
-                let random_potential_pick = potential_picks[rand_val as usize];
+                let random_potential_pick = self.rng.choose(potential_picks);
 
                 // remove the states we do not want, i.e. the next move will let our opponent win.
                 let states: Vec<(Game, Pos)> = states
@@ -245,23 +236,19 @@ impl SimpleAi {
                     #[cfg(feature = "ai_reasoning")]
                     println!("AI: We will lose on the next move, wherever we place our piece and whichever piece we select! :<");
                     // return a random piece from `remaining_pieces`
-                    let rand_val = self.rng.next() % game.remaining_pieces().len() as u64;
-                    #[allow(clippy::cast_possible_truncation)]
-                    let random_piece = game.remaining_pieces()[rand_val as usize];
+                    let random_piece = *self.rng.choose(game.remaining_pieces());
 
-                    let rand_val = self.rng.next() % game.field.empty_spaces().len() as u64;
-                    #[allow(clippy::cast_possible_truncation)]
-                    let random_pos = game.field.empty_spaces()[rand_val as usize];
+                    let random_pos = self.rng.choose(game.field.empty_spaces());
                     game.do_move(random_pos, random_piece).unwrap();
                     return game.clone();
                 }
 
                 // Pick a random state from this list for now.
-                let rand_val = self.rng.next() % states.len() as u64;
+                let state = self.rng.choose(states.iter());
 
                 // Grab the best move and then construct the new game.
                 #[allow(clippy::cast_possible_truncation)]
-                game.do_move(states[rand_val as usize].1, random_potential_pick)
+                game.do_move(state.1, random_potential_pick)
                     .expect("ai should only do legal moves!");
                 game.clone()
             }
