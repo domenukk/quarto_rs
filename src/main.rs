@@ -31,7 +31,6 @@ Welcome to `quarto_rs`
     deny(
         bad_style,
         const_err,
-        dead_code,
         improper_ctypes,
         non_shorthand_field_patterns,
         no_mangle_generic_items,
@@ -40,7 +39,6 @@ Welcome to `quarto_rs`
         patterns_in_fns_without_body,
         private_in_public,
         unconditional_recursion,
-        unused,
         unused_allocation,
         unused_comparisons,
         unused_parens,
@@ -145,13 +143,13 @@ fn main() {
 
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn ai_wars() {
-    const ITERS: usize = 10_000;
+    const ITERS: usize = 100;
 
     let it = std::time::Instant::now();
 
     let mut ai_one_wins = 0;
     let mut ai_two_wins = 0;
-    let mut turns = 0;
+    let mut turns = 0_u64;
 
     'outer: for _ in 0..ITERS {
         let mut game = Game::new(Player::PlayerOne);
@@ -169,7 +167,7 @@ fn ai_wars() {
                         ai_two_wins += 1;
                     }
                 }
-                turns += game.round();
+                turns += game.round() as u64;
                 continue 'outer;
             }
 
