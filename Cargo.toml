@@ -1,3 +1,4 @@
+cargo-features = ["profile-rustflags"]
 [package]
 name = "quarto"
 version = "0.1.0"
@@ -13,3 +14,13 @@ categories = ["game"]
 
 [dependencies]
 libafl = "0.8"
+
+[features]
+square_mode = []
+ai_reasoning = []
+
+[profile.heavy-opt]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+rustflags = ["-C", "target-cpu=native"]
