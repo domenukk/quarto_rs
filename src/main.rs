@@ -46,9 +46,10 @@ Welcome to `quarto_rs`
     )
 )]
 
-use std::io;
+use std::io::{self, stdin};
 
 use game::{Game, Player, Status};
+use piece::Piece;
 
 use crate::{ai::SimpleAi, field::try_parse_pos};
 
@@ -75,13 +76,10 @@ fn main() {
 
     field.pp();*/
 
-    ai_wars();
-
-    return;
+    // ai_wars();
 
     let mut game = Game::new(Player::PlayerOne);
 
-    let stdin = io::stdin();
     let mut buf = String::new();
 
     let mut ai = SimpleAi::new(Player::PlayerTwo, 1);
@@ -95,38 +93,17 @@ fn main() {
         }
 
         if game.player() == Player::PlayerOne {
-            let piece_id: usize = loop {
-                println!(
-                    "{:?}, please chose the id of the next piece:",
-                    game.player()
-                );
-                buf.clear();
-                stdin.read_line(&mut buf).unwrap();
-                let num = buf.trim().parse();
-                if let Ok(num) = num {
-                    if num < game.remaining_pieces().len() {
-                        break num;
-                    }
-                }
-                #[cfg(debug_assertions)]
-                println!("{} (str: {})", num.err().unwrap(), &buf);
-                println!(
-                    "Illegal choice: {}, please pick the id of a remaining piece:",
-                    buf
-                );
-                game.pp_remaining_pieces();
-            };
-            let next_piece = game.remaining_pieces()[piece_id];
-
             if game.is_initial_move() {
+                let next_piece = read_piece(&game).unwrap();
                 game.initial_move(next_piece).unwrap();
             } else {
                 loop {
-                    println!("Select x,y to put the place to:");
+                    println!("Select x,y to put the piece to:");
                     buf.clear();
-                    stdin.read_line(&mut buf).unwrap();
+                    stdin().read_line(&mut buf).unwrap();
                     let pos = try_parse_pos(&buf);
                     if let Ok(pos) = pos {
+                        let next_piece = read_piece(&game).unwrap();
                         if game.do_move(pos, next_piece).is_ok() {
                             break;
                         }
@@ -139,6 +116,32 @@ fn main() {
             game = ai.play_iteratively(&mut game);
         }
     }
+}
+
+fn read_piece(game: &Game) -> Result<Piece, ()> {
+    let mut buf = String::with_capacity(16);
+    let piece_id: usize = loop {
+        println!(
+            "\n{:?}, please chose the id of your opponent's next piece:",
+            game.player()
+        );
+        buf.clear();
+        stdin().read_line(&mut buf).unwrap();
+        let num = buf.trim().parse();
+        if let Ok(num) = num {
+            if num < game.remaining_pieces().len() {
+                break num;
+            }
+        }
+        #[cfg(debug_assertions)]
+        println!("{} (str: {})", num.err().unwrap(), &buf);
+        println!(
+            "Illegal choice: {}, please pick the id of a remaining piece:",
+            buf
+        );
+        game.pp_remaining_pieces();
+    };
+    Ok(game.remaining_pieces()[piece_id])
 }
 
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]

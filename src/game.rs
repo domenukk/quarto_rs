@@ -104,24 +104,23 @@ impl Game {
         println!("Quarto, round: {}", self.round());
         if self.running() {
             println!("{:?}, move!", self.player());
-            if let Some(piece) = self.next_piece() {
-                print!("Your piece is: ");
-                piece.pp();
-                println!();
-            }
         } else if let Some(winner) = self.winner() {
             println!("{:?} won!", winner);
         } else {
             println!("Game ended in a draw!");
         }
 
-        println!("\nField:");
-        self.field.pp();
-        println!();
-
         if !self.remaining_pieces().is_empty() {
             println!("\nRemaining Pieces:");
             self.pp_remaining_pieces();
+        }
+        println!("\nField:");
+        self.field.pp();
+
+        if let Some(piece) = self.next_piece() {
+            println!("\nThe next piece to place is:");
+            piece.pp();
+            println!();
         }
     }
 

@@ -142,6 +142,7 @@ impl Field {
                 }
             }
         }
+        println!();
     }
 }
 
