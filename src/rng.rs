@@ -37,7 +37,7 @@ mod tests {
     #[test]
     fn test_rng() {
         use crate::rng::RomuDuoJrRand;
-        let rng = RomuDuoJrRand::with_seed(13371339);
+        let mut rng = RomuDuoJrRand::with_seed(13371339);
 
         let _ = rng.next();
     }
