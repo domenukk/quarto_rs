@@ -1,4 +1,4 @@
-cargo-features = ["profile-rustflags"]
+# cargo-features = ["profile-rustflags"]
 [package]
 name = "quarto"
 version = "0.1.0"
@@ -19,8 +19,8 @@ libafl = "0.8"
 square_mode = []
 ai_reasoning = []
 
-[profile.heavy-opt]
-inherits = "release"
-opt-level = 3
-lto = "fat"
-rustflags = ["-C", "target-cpu=native"]
+#[profile.heavy-opt]
+#inherits = "release"
+#opt-level = 3
+#lto = "fat"
+#rustflags = ["-C", "target-cpu=native"]
