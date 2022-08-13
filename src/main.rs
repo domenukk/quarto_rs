@@ -7,6 +7,7 @@ Welcome to `quarto_rs`
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
+#![deny(unsafe_code)]
 #![allow(
     clippy::unreadable_literal,
     clippy::type_repetition_in_bounds,
@@ -94,7 +95,7 @@ fn main() {
 
         if game.player() == Player::PlayerOne {
             if game.is_initial_move() {
-                let next_piece = read_piece(&game).unwrap();
+                let next_piece = read_piece(&game);
                 game.initial_move(next_piece).unwrap();
             } else {
                 loop {
@@ -103,7 +104,7 @@ fn main() {
                     stdin().read_line(&mut buf).unwrap();
                     let pos = try_parse_pos(&buf);
                     if let Ok(pos) = pos {
-                        let next_piece = read_piece(&game).unwrap();
+                        let next_piece = read_piece(&game);
                         if game.do_move(pos, next_piece).is_ok() {
                             break;
                         }
@@ -118,7 +119,7 @@ fn main() {
     }
 }
 
-fn read_piece(game: &Game) -> Result<Piece, ()> {
+fn read_piece(game: &Game) -> Piece {
     let mut buf = String::with_capacity(16);
     let piece_id: usize = loop {
         println!(
@@ -141,7 +142,7 @@ fn read_piece(game: &Game) -> Result<Piece, ()> {
         );
         game.pp_remaining_pieces();
     };
-    Ok(game.remaining_pieces()[piece_id])
+    game.remaining_pieces()[piece_id]
 }
 
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]

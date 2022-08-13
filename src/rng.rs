@@ -76,6 +76,7 @@ impl RomuDuoJrRand {
         debug_assert!(iter.len() > 0, "choosing from an empty iterator");
 
         // pick a random, valid index
+        #[allow(clippy::cast_possible_truncation)]
         let index = self.below(iter.len() as u64) as usize;
 
         // return the item chosen

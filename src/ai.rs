@@ -77,8 +77,8 @@ impl SimpleAi {
 
     /// Tries to play the game iteratively, searching for a locally optimal move
     /// Strategy:
-    ///     We are given a piece by the opponent, we will then caluclate all states that are
-    ///     immediatley reachable and check if they fulfill the winning condition.
+    ///     We are given a piece by the opponent, we will then calculate all states that are
+    ///     immediately reachable and check if they fulfill the winning condition.
     ///     If they do not fulfill the winning condition, we will all put them in a map here.
     ///     Then we will check the remaining pieces and find pieces that do *not* yield an
     ///     immediate win to the opponent, then for all of those pieces, we will need to
@@ -118,7 +118,7 @@ impl SimpleAi {
                     empty_spaces.len()
                 );
 
-                let mut states: Vec<(Game, Pos)> = Vec::new();
+                let mut states: Vec<(Game, Pos)> = Vec::with_capacity(16);
 
                 for pos in empty_spaces {
                     // Construct all states.
