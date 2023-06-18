@@ -91,6 +91,6 @@ mod tests {
         use crate::rng::RomuDuoJrRand;
         let mut rng = RomuDuoJrRand::with_seed(13371339);
 
-        let _ = rng.next();
+        _ = rng.next();
     }
 }

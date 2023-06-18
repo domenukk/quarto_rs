@@ -2,8 +2,10 @@ use crate::piece::Piece;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct Field {
-    // The field of a quarto game.
+    /// The field of a quarto game.
     field: [[Option<Piece>; Self::SIZE]; Self::SIZE],
+    /// If true, squares are counted as winning condition.
+    pub square_mode: bool,
 }
 
 pub type Pos = (usize, usize);
@@ -21,6 +23,13 @@ pub fn try_parse_pos(s: &str) -> Result<Pos, ()> {
 
 impl Field {
     pub const SIZE: usize = 4;
+
+    pub fn square_mode() -> Self {
+        Self {
+            square_mode: true,
+            ..Field::default()
+        }
+    }
 
     pub fn new() -> Self {
         Self::default()
@@ -72,20 +81,21 @@ impl Field {
             return true;
         }
 
-        #[cfg(feature = "square_mode")]
-        for i in 0..(Self::SIZE - 1) {
-            let mut flattened_square = [None; 4];
-            for k in 0..(Self::SIZE - 1) {
-                //for l in 0..2 {
-                //flattened_square[l] = self.field[i][k + l]
-                //}
-                flattened_square[..2].copy_from_slice(&self.field[i][k..(2 + k)]);
-                //for l in 0..2 {
-                //flattened_square[l + 2] = self.field[i + 1][k + l]
-                //}
-                flattened_square[2..(2 + 2)].copy_from_slice(&self.field[i + 1][k..(2 + k)]);
-                if Self::check_array_for_win(&flattened_square) {
-                    return true;
+        if self.square_mode {
+            for i in 0..(Self::SIZE - 1) {
+                let mut flattened_square = [None; 4];
+                for k in 0..(Self::SIZE - 1) {
+                    //for l in 0..2 {
+                    //flattened_square[l] = self.field[i][k + l]
+                    //}
+                    flattened_square[..2].copy_from_slice(&self.field[i][k..(2 + k)]);
+                    //for l in 0..2 {
+                    //flattened_square[l + 2] = self.field[i + 1][k + l]
+                    //}
+                    flattened_square[2..(2 + 2)].copy_from_slice(&self.field[i + 1][k..(2 + k)]);
+                    if Self::check_array_for_win(&flattened_square) {
+                        return true;
+                    }
                 }
             }
         }
@@ -125,7 +135,7 @@ impl Field {
     }
 
     pub fn pp(&self) {
-        for (i, row) in (&self.field).iter().enumerate() {
+        for (i, row) in self.field.iter().enumerate() {
             for (k, val) in (row).iter().enumerate() {
                 if k == 0 {
                     if i > 0 {
@@ -159,9 +169,9 @@ mod tests {
         Piece::new_with_props(Property::Full as u8 | Property::Round as u8);
 
     #[test]
-    #[cfg(feature = "square_mode")]
     fn test_squares() {
         let mut field = Field::new();
+        field.square_mode = true;
 
         field.put((0, 0), TEST_LIGHT_TALL).unwrap();
         field.put((0, 1), TEST_LIGHT_TALL).unwrap();
@@ -175,9 +185,9 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "square_mode")]
     fn test_wrong_prop_square() {
         let mut field = Field::new();
+        field.square_mode = true;
 
         field.put((0, 0), TEST_LIGHT_TALL).unwrap();
         field.put((0, 1), TEST_DARK_SHORT).unwrap();
@@ -188,9 +198,9 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "square_mode")]
     fn test_different_square() {
         let mut field = Field::new();
+        field.square_mode = true;
 
         field.put((2, 2), TEST_LIGHT_TALL).unwrap();
         field.put((2, 3), TEST_LIGHT_TALL).unwrap();

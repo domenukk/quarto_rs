@@ -1,8 +1,7 @@
-use libafl::bolts::rands::{Rand, StdRand};
-
 use crate::{
     field::{Field, Pos},
     piece::Piece,
+    rng::RomuDuoJrRand,
 };
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -42,6 +41,7 @@ pub struct Game {
     pub field: Field,
     remaining_pieces: Vec<Piece>,
     pub status: Status,
+    pub ai_reasoning: bool,
 }
 
 impl Game {
@@ -53,6 +53,7 @@ impl Game {
             remaining_pieces,
             field: Field::new(),
             status: Status::InitialMove { starting_player },
+            ai_reasoning: false,
         }
     }
 
@@ -105,7 +106,7 @@ impl Game {
         if self.running() {
             println!("{:?}, move!", self.player());
         } else if let Some(winner) = self.winner() {
-            println!("{:?} won!", winner);
+            println!("{winner:?} won!");
         } else {
             println!("Game ended in a draw!");
         }
@@ -129,7 +130,7 @@ impl Game {
             if i > 0 && (i) % 3 == 0 {
                 println!();
             }
-            print!("{}: ", i);
+            print!("{i}: ");
             if i < 10 {
                 // padding for low numbers
                 print!(" ");
@@ -143,7 +144,7 @@ impl Game {
     }
 
     /// Starts a new game with a random player
-    pub fn with_rand_player(rng: &mut StdRand) -> Self {
+    pub fn with_rand_player(rng: &mut RomuDuoJrRand) -> Self {
         Self::new(rng.choose([Player::PlayerOne, Player::PlayerTwo]))
     }
 

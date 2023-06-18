@@ -2,9 +2,12 @@ use crate::{
     field::Pos,
     game::{Game, Player, Status},
     piece::Piece,
+    rng::RomuDuoJrRand,
 };
-use libafl::bolts::rands::{Rand, RandomSeed, StdRand};
-use std::collections::HashSet;
+use std::{
+    collections::HashSet,
+    time::{Instant, SystemTime, UNIX_EPOCH},
+};
 
 pub type Score = usize;
 
@@ -12,14 +15,20 @@ pub type Score = usize;
 pub struct SimpleAi {
     own_player: Player,
     depth: usize,
-    rng: StdRand,
+    rng: RomuDuoJrRand,
 }
 
 impl SimpleAi {
     pub fn new(own_player: Player, depth: usize) -> Self {
+        // much secure, wow
+        let seed = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        #[allow(clippy::cast_possible_truncation)]
         Self {
             depth,
-            rng: StdRand::new(),
+            rng: RomuDuoJrRand::with_seed(seed as u64),
             own_player,
         }
     }
@@ -97,8 +106,9 @@ impl SimpleAi {
                 starting_player: player,
             } => {
                 assert!(self.own_player == player);
-                #[cfg(feature = "ai_reasoning")]
-                println!("AI: Does not matter which piece we pick on the initial move.");
+                if game.ai_reasoning {
+                    println!("AI: Does not matter which piece we pick on the initial move.");
+                }
                 // return a random piece from `remaining_pieces`
                 let random_piece = *self.rng.choose(game.remaining_pieces());
                 game.initial_move(random_piece).unwrap();
@@ -110,13 +120,20 @@ impl SimpleAi {
             } => {
                 // This is where the interesting stuff happens.
 
+                let it = if game.ai_reasoning {
+                    Some(Instant::now())
+                } else {
+                    None
+                };
+
                 // Grab the empty spaces.
                 let empty_spaces = t_game.field.empty_spaces();
-                #[cfg(feature = "ai_reasoning")]
-                println!(
-                    "AI: There are {} empty spaces for us to put our piece on",
-                    empty_spaces.len()
-                );
+                if game.ai_reasoning {
+                    println!(
+                        "AI: There are {} empty spaces for us to put our piece on",
+                        empty_spaces.len()
+                    );
+                }
 
                 let mut states: Vec<(Game, Pos)> = Vec::with_capacity(16);
 
@@ -147,8 +164,9 @@ impl SimpleAi {
                     states.push((state, pos));
                 }
 
-                #[cfg(feature = "ai_reasoning")]
-                println!("AI: We have {} states for our move", states.len());
+                if game.ai_reasoning {
+                    println!("AI: We have {} states for our move", states.len());
+                }
 
                 // This tracks which states we will remove after we calculate for the adversary.
                 let mut removals = Vec::new();
@@ -172,9 +190,8 @@ impl SimpleAi {
                                 .expect("huh ai should only do legal moves!");
 
                             // Check if any of these moves are winning.
-                            if new_state.field.check_field_for_win() {
-                                #[cfg(feature = "ai_reasoning")]
-                                println!("Piece: {:?} will let opponent win on pos {:?} if we place ours({:?}) on {:?}", piece, pos, our_piece, our_pos);
+                            if new_state.field.check_field_for_win() && game.ai_reasoning {
+                                println!("Piece: {piece:?} will let opponent win on pos {pos:?} if we place ours({our_piece:?}) on {pos:?}");
                                 // remove these states from the states vector.
                                 removals.push(state_idx);
                                 // Add the piece to the non_picks.
@@ -185,27 +202,29 @@ impl SimpleAi {
                 }
 
                 let remaining_pieces = game.remaining_pieces().iter().collect::<HashSet<_>>();
-                #[cfg(feature = "ai_reasoning")]
-                println!("AI: Game has {} remaining pieces", remaining_pieces.len());
-                #[cfg(feature = "ai_reasoning")]
-                println!(
-                    "AI: We have {} pieces that we want to avoid",
-                    non_picks.len()
-                );
+                if game.ai_reasoning {
+                    println!("AI: Game has {} remaining pieces", remaining_pieces.len());
+                    println!(
+                        "AI: We have {} pieces that we want to avoid",
+                        non_picks.len()
+                    );
+                }
 
                 let potential_picks: Vec<Piece> = remaining_pieces
                     .difference(&non_picks)
                     .map(|x| **x)
                     .collect();
 
-                #[cfg(feature = "ai_reasoning")]
-                println!("AI: calculated all states that we can put things on without or opponent immediately winning after {:.4} us", it.elapsed().as_micros());
+                if game.ai_reasoning {
+                    println!("AI: calculated all states that we can put things on without our opponent immediately winning after {:.4} us", it.unwrap().elapsed().as_micros());
+                }
 
                 // This means, our opponent will definitely win next round or it is a draw :(
                 // Just shortcut and pick any piece.
                 if potential_picks.is_empty() {
-                    #[cfg(feature = "ai_reasoning")]
-                    println!("AI: Loss is imminent, just give a random piece");
+                    if game.ai_reasoning {
+                        println!("AI: Loss is imminent, just give a random piece");
+                    }
                     if game.remaining_pieces().is_empty() {
                         // This will be a draw.
                         game.do_move(states[0].1, our_piece).unwrap();
@@ -233,8 +252,9 @@ impl SimpleAi {
 
                 // Oh no! we cannot avoid a game loss here. Just return.
                 if states.is_empty() {
-                    #[cfg(feature = "ai_reasoning")]
-                    println!("AI: We will lose on the next move, wherever we place our piece and whichever piece we select! :<");
+                    if game.ai_reasoning {
+                        println!("AI: We will lose on the next move, wherever we place our piece and whichever piece we select! :<");
+                    }
                     // return a random piece from `remaining_pieces`
                     let random_piece = *self.rng.choose(game.remaining_pieces());
 

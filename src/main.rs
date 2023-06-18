@@ -47,40 +47,59 @@ Welcome to `quarto_rs`
     )
 )]
 
-use std::io::{self, stdin};
-
-use game::{Game, Player, Status};
-use piece::Piece;
-
-use crate::{ai::SimpleAi, field::try_parse_pos};
-
 mod ai;
 mod field;
 mod game;
 mod piece;
 mod rng;
 
+use std::{env::args, io::stdin};
+
+use crate::{
+    ai::SimpleAi,
+    field::try_parse_pos,
+    game::{Game, Player, Status},
+    piece::Piece,
+};
+
 fn main() {
-    /*let test_light_tall: Piece =
-        Piece::new_with_props(Property::Tall as u8 | Property::Light as u8);
-    let test_dark_short: Piece = Piece::new();
+    if args().any(|x| x.contains("help") || x == "-h") {
+        let current_exe = std::env::current_exe().unwrap();
+        let current_exe_name = current_exe.file_name().unwrap().to_string_lossy();
+        println!(
+            "Your friendly Quarto game.
 
-    let mut field = Field::new();
+Usage: {current_exe_name} <Options>
 
-    field.put((3, 0), test_light_tall).unwrap();
-    field.put((2, 1), test_light_tall).unwrap();
-    field.put((1, 2), test_dark_short).unwrap();
+Options:
+    --ai-wars|-a:       Watch the AI battle itself.
+    --ai-reasoning|-r:  Print information about what the AI is doing, and why, during the game.
+    --square-mode|-s:   Enable harder rules: not only 4 of the same in a row, but also a square of 4 is considered a win.
+    --help|-h:          Print this help screen.
+"
+        );
+        return;
+    }
 
-    assert!(!field.check_field_for_win());
-
-    field.put((0, 3), test_light_tall).unwrap();
-
-    field.pp();*/
-
-    // ai_wars();
+    if args().any(|x| x == "--ai-wars" || x == "-a") {
+        ai_wars();
+        return;
+    }
 
     let mut game = Game::new(Player::PlayerOne);
 
+    if args().any(|x| x == "--ai-reasoning" || x == "-r") {
+        game.ai_reasoning = true;
+    }
+
+    if args().any(|x| x == "--square-mode" || x == "-s") {
+        game.field.square_mode = true;
+    }
+
+    play(game);
+}
+
+fn play(mut game: Game) {
     let mut buf = String::new();
 
     let mut ai = SimpleAi::new(Player::PlayerTwo, 1);
@@ -123,8 +142,9 @@ fn read_piece(game: &Game) -> Piece {
     let mut buf = String::with_capacity(16);
     let piece_id: usize = loop {
         println!(
-            "\n{:?}, please chose the id of your opponent's next piece:",
-            game.player()
+            "\n{:?}, please chose your opponen's next piece (0-{}):",
+            game.player(),
+            game.remaining_pieces().len() - 1
         );
         buf.clear();
         stdin().read_line(&mut buf).unwrap();
@@ -135,11 +155,8 @@ fn read_piece(game: &Game) -> Piece {
             }
         }
         #[cfg(debug_assertions)]
-        println!("{} (str: {})", num.err().unwrap(), &buf);
-        println!(
-            "Illegal choice: {}, please pick the id of a remaining piece:",
-            buf
-        );
+        println!("{} (str: {buf})", num.err().unwrap());
+        println!("Illegal choice: {buf}, please pick the id of a remaining piece:");
         game.pp_remaining_pieces();
     };
     game.remaining_pieces()[piece_id]
@@ -206,5 +223,32 @@ fn ai_wars() {
     let draws = ITERS - ai_one_wins - ai_two_wins;
     let draw_percentage = (draws as f64 / ITERS as f64) * 100.;
 
-    println!("We had {} draws ({}%)", draws, draw_percentage,);
+    println!("We had {draws} draws ({draw_percentage}%)");
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        field::Field,
+        piece::{Piece, Property},
+    };
+
+    #[test]
+    fn test_check_field_for_win() {
+        let test_light_tall: Piece =
+            Piece::new_with_props(Property::Tall as u8 | Property::Light as u8);
+        let test_dark_short: Piece = Piece::new();
+
+        let mut field = Field::new();
+
+        field.put((3, 0), test_light_tall).unwrap();
+        field.put((2, 1), test_light_tall).unwrap();
+        field.put((1, 2), test_dark_short).unwrap();
+
+        assert!(!field.check_field_for_win());
+
+        field.put((0, 3), test_light_tall).unwrap();
+
+        field.pp();
+    }
 }
