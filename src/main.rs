@@ -102,7 +102,7 @@ Options:
 fn play(mut game: Game) {
     let mut buf = String::new();
 
-    let mut ai = SimpleAi::new(Player::PlayerTwo, 1);
+    let mut ai = SimpleAi::new(Player::PlayerTwo);
 
     println!("Let the games begin!");
 
@@ -175,8 +175,8 @@ fn ai_wars() {
     'outer: for _ in 0..ITERS {
         let mut game = Game::new(Player::PlayerOne);
 
-        let mut ai_one = SimpleAi::new(Player::PlayerOne, 1);
-        let mut ai_two = SimpleAi::new(Player::PlayerTwo, 1);
+        let mut ai_one = SimpleAi::new(Player::PlayerOne);
+        let mut ai_two = SimpleAi::new(Player::PlayerTwo);
 
         loop {
             //game.pp();
@@ -236,7 +236,7 @@ mod test {
     #[test]
     fn test_check_field_for_win() {
         let test_light_tall: Piece =
-            Piece::new_with_props(Property::Tall as u8 | Property::Light as u8);
+            Piece::with_props_props(Property::Tall as u8 | Property::Light as u8);
         let test_dark_short: Piece = Piece::new();
 
         let mut field = Field::new();

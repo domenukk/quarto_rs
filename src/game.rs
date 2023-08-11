@@ -1,7 +1,6 @@
 use crate::{
     field::{Field, Pos},
     piece::Piece,
-    rng::RomuDuoJrRand,
 };
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -47,7 +46,7 @@ pub struct Game {
 impl Game {
     /// Starts a new game
     pub fn new(starting_player: Player) -> Self {
-        let remaining_pieces = (0..16).map(Piece::new_with_props).collect();
+        let remaining_pieces = (0..16).map(Piece::with_props_props).collect();
 
         Self {
             remaining_pieces,
@@ -143,11 +142,6 @@ impl Game {
         println!();
     }
 
-    /// Starts a new game with a random player
-    pub fn with_rand_player(rng: &mut RomuDuoJrRand) -> Self {
-        Self::new(rng.choose([Player::PlayerOne, Player::PlayerTwo]))
-    }
-
     /// Returns the list of remaining pieces
     pub fn remaining_pieces(&self) -> &[Piece] {
         &self.remaining_pieces
@@ -212,63 +206,6 @@ impl Game {
         } else {
             Err(())
         }
-    }
-
-    pub fn last_move(&mut self, pos: Pos) -> Result<(), ()> {
-        if let Status::Move {
-            next_player: player,
-            next_piece: piece,
-        } = self.status
-        {
-            self.field.put(pos, piece)?;
-            if self.field.check_field_for_win() {
-                self.status = Status::Won { winner: player }
-            } else {
-                self.status = Status::Draw {
-                    last_player: player,
-                }
-            };
-            Ok(())
-        } else {
-            Err(())
-        }
-    }
-
-    /// Undo the latest move
-    pub fn unmove(&mut self, last_pos: Pos) {
-        let next_player = match self.status {
-            Status::InitialMove { .. } => {
-                panic!("Can't unmove an initial move, use unmove_initial!")
-            }
-            Status::Won { winner } => winner,
-            Status::Draw { last_player } => last_player,
-            Status::Move { next_player, .. } => next_player,
-        };
-
-        // There are only two players, so next is also prev.
-        let prev_player = next_player.next();
-
-        let last_piece = self.field.clear(last_pos).unwrap();
-        self.remaining_pieces.push(last_piece);
-
-        if self.remaining_pieces.len() == Field::SIZE * Field::SIZE {
-            self.status = Status::InitialMove {
-                starting_player: next_player,
-            }
-        } else {
-            self.status = Status::Move {
-                next_piece: last_piece,
-                next_player: prev_player,
-            }
-        };
-    }
-
-    pub fn unmove_initial(&mut self) {
-        assert!(
-            self.is_initial_move(),
-            "used unmove_initial to unmove non-initial move"
-        );
-        self.remaining_pieces = (0..16).map(Piece::new_with_props).collect();
     }
 }
 

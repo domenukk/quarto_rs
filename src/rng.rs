@@ -53,12 +53,6 @@ impl RomuDuoJrRand {
         unbiased_rnd % upper_bound_excl
     }
 
-    /// Gets a value between the given lower bound (inclusive) and upper bound (inclusive)
-    pub fn between(&mut self, lower_bound_incl: u64, upper_bound_incl: u64) -> u64 {
-        debug_assert!(lower_bound_incl <= upper_bound_incl);
-        lower_bound_incl + self.below(upper_bound_incl - lower_bound_incl + 1)
-    }
-
     /// Choose an item at random from the given iterator, sampling uniformly.
     ///
     /// Note: the runtime cost is bound by the iterator's [`nth`][`Iterator::nth`] implementation

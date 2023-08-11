@@ -24,13 +24,6 @@ pub fn try_parse_pos(s: &str) -> Result<Pos, ()> {
 impl Field {
     pub const SIZE: usize = 4;
 
-    pub fn square_mode() -> Self {
-        Self {
-            square_mode: true,
-            ..Field::default()
-        }
-    }
-
     pub fn new() -> Self {
         Self::default()
     }
@@ -41,17 +34,6 @@ impl Field {
             return Ok(());
         }
         Err(())
-    }
-
-    pub fn get(&self, pos: Pos) -> Option<Piece> {
-        self.field[pos.1][pos.0]
-    }
-
-    /// Clear at a position, returning the current piece at this point
-    pub fn clear(&mut self, pos: Pos) -> Option<Piece> {
-        let ret = self.get(pos);
-        self.field[pos.1][pos.0] = None;
-        ret
     }
 
     /// Checks if the win condition on this field is fulfilled.
@@ -163,10 +145,10 @@ mod tests {
         piece::{Piece, Property},
     };
     const TEST_LIGHT_TALL: Piece =
-        Piece::new_with_props(Property::Tall as u8 | Property::Light as u8);
+        Piece::with_props_props(Property::Tall as u8 | Property::Light as u8);
     const TEST_DARK_SHORT: Piece = Piece::new();
     const TEST_SHORT_FULL_DARK_CIRCLE: Piece =
-        Piece::new_with_props(Property::Full as u8 | Property::Round as u8);
+        Piece::with_props_props(Property::Full as u8 | Property::Round as u8);
 
     #[test]
     fn test_squares() {
