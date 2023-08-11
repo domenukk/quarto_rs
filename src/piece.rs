@@ -23,7 +23,7 @@ pub enum Property {
 
 impl Piece {
     #[must_use]
-    pub const fn with_props_props(props: u8) -> Self {
+    pub const fn with_props(props: u8) -> Self {
         assert!(props >> 4 == 0, "top bits should be clear");
         let props = props | ((!props) << 4);
 
@@ -100,8 +100,7 @@ impl Piece {
 mod tests {
     use crate::piece::{Piece, Property};
 
-    const TEST_LIGHT_TALL: Piece =
-        Piece::with_props_props(Property::Tall as u8 | Property::Light as u8);
+    const TEST_LIGHT_TALL: Piece = Piece::with_props(Property::Tall as u8 | Property::Light as u8);
 
     #[test]
     fn test_repr() {

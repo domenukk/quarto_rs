@@ -1,4 +1,17 @@
-/// Taken from <https://github.com/AFLplusplus/LibAFL/blob/main/libafl/src/bolts/rands.rs>
+//! Random number generation based on [`RomuDuoJrRand`] and and [`LibAFL`](https://github.com/AFLplusplus/LibAFL).
+
+use std::time::{SystemTime, UNIX_EPOCH};
+
+/// A very mediocre rng seed from current time
+/// Much secure, wow.
+pub fn time_nanos() -> u128 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos()
+}
+
+/// Taken from <https://github.com/AFLplusplus/LibAFL/blob/main/libafl_bolts/src/rands.rs>
 #[derive(Copy, Clone, Debug)]
 pub struct RomuDuoJrRand {
     x_state: u64,

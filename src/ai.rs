@@ -4,10 +4,7 @@ use crate::{
     piece::Piece,
     rng::RomuDuoJrRand,
 };
-use std::{
-    collections::HashSet,
-    time::{Instant, SystemTime, UNIX_EPOCH},
-};
+use std::{collections::HashSet, time::Instant};
 
 #[allow(clippy::module_name_repetitions)]
 pub struct SimpleAi {
@@ -16,15 +13,10 @@ pub struct SimpleAi {
 }
 
 impl SimpleAi {
-    pub fn new(own_player: Player) -> Self {
-        // much secure, wow
-        let seed = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+    pub fn with_seed(own_player: Player, seed: u64) -> Self {
         #[allow(clippy::cast_possible_truncation)]
         Self {
-            rng: RomuDuoJrRand::with_seed(seed as u64),
+            rng: RomuDuoJrRand::with_seed(seed),
             own_player,
         }
     }

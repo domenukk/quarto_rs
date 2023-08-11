@@ -1,4 +1,4 @@
-use crate::piece::Piece;
+use crate::{game::ArrayBase, piece::Piece};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct Field {
@@ -34,6 +34,19 @@ impl Field {
             return Ok(());
         }
         Err(())
+    }
+
+    #[cfg(test)]
+    pub fn get(&self, pos: Pos) -> Option<Piece> {
+        self.field[pos.1][pos.0]
+    }
+
+    /// Clear at a position, returning the current piece at this point
+    #[cfg(test)]
+    pub fn clear(&mut self, pos: Pos) -> Option<Piece> {
+        let ret = self.get(pos);
+        self.field[pos.1][pos.0] = None;
+        ret
     }
 
     /// Checks if the win condition on this field is fulfilled.
@@ -116,25 +129,39 @@ impl Field {
         ret
     }
 
-    pub fn pp(&self) {
-        for (i, row) in self.field.iter().enumerate() {
-            for (k, val) in (row).iter().enumerate() {
-                if k == 0 {
-                    if i > 0 {
+    /// Render the field in multiple lines
+    pub fn pp(&self, array_base: ArrayBase) {
+        for (y, row) in self.field.iter().enumerate() {
+            for (x, val) in (row).iter().enumerate() {
+                if x == 0 {
+                    if y > 0 {
                         println!();
+                        println!("  > ---------- + ---------- + ---------- + ---------- <");
+                    } else {
+                        if array_base == ArrayBase::Zero {
+                            println!("        0            1            2            3       ");
+                        } else {
+                            println!("        1            2            3            4       ");
+                        }
+                        println!("  . ---------- . ---------- . ---------- . ---------- .");
                     }
-                    println!("---------   ---------   ---------   ---------");
-                } else if k < Self::SIZE {
+                    let based_y = array_base.based(y);
+                    print!("{based_y} | ");
+                } else if x < Self::SIZE {
                     print!(" | ");
                 }
                 if let Some(val) = val {
                     val.pp();
                 } else {
-                    print!("         ");
+                    print!("          ");
+                }
+                if x == Self::SIZE - 1 {
+                    print!(" |");
                 }
             }
         }
         println!();
+        println!("  ^ ---------- ^ ---------- ^ ---------- ^ ---------- ^");
     }
 }
 
@@ -144,11 +171,10 @@ mod tests {
         field::Field,
         piece::{Piece, Property},
     };
-    const TEST_LIGHT_TALL: Piece =
-        Piece::with_props_props(Property::Tall as u8 | Property::Light as u8);
-    const TEST_DARK_SHORT: Piece = Piece::new();
+    const TEST_LIGHT_TALL: Piece = Piece::with_props(Property::Tall as u8 | Property::Light as u8);
+    const TEST_DARK_SHORT: Piece = Piece::with_props(0);
     const TEST_SHORT_FULL_DARK_CIRCLE: Piece =
-        Piece::with_props_props(Property::Full as u8 | Property::Round as u8);
+        Piece::with_props(Property::Full as u8 | Property::Round as u8);
 
     #[test]
     fn test_squares() {

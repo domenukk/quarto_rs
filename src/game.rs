@@ -1,3 +1,5 @@
+use core::fmt::Display;
+
 use crate::{
     field::{Field, Pos},
     piece::Piece,
@@ -14,6 +16,15 @@ impl Player {
         match self {
             Self::PlayerOne => Self::PlayerTwo,
             Self::PlayerTwo => Self::PlayerOne,
+        }
+    }
+}
+
+impl Display for Player {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Player::PlayerOne => f.write_str("Player 1"),
+            Player::PlayerTwo => f.write_str("Player 2"),
         }
     }
 }
@@ -35,24 +46,60 @@ pub enum Status {
     },
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum ArrayBase {
+    Zero,
+    One,
+}
+
+impl ArrayBase {
+    #[must_use]
+    #[inline]
+    pub fn based(self, zero_based_val: usize) -> usize {
+        if self == ArrayBase::Zero {
+            zero_based_val
+        } else {
+            // Wrapping is a nice easter egg, and we don't panic.
+            zero_based_val.wrapping_add(1)
+        }
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn unbased(self, based_val: usize) -> usize {
+        if self == ArrayBase::Zero {
+            based_val
+        } else {
+            based_val.wrapping_sub(1)
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Game {
+    pub array_base: ArrayBase,
     pub field: Field,
     remaining_pieces: Vec<Piece>,
     pub status: Status,
     pub ai_reasoning: bool,
+    pub seed: Option<u64>,
+    pub pvp: bool,
 }
 
 impl Game {
     /// Starts a new game
     pub fn new(starting_player: Player) -> Self {
-        let remaining_pieces = (0..16).map(Piece::with_props_props).collect();
+        let remaining_pieces = (0..16).map(Piece::with_props).collect();
 
+        #[allow(clippy::cast_precision_loss)]
         Self {
+            array_base: ArrayBase::One,
             remaining_pieces,
             field: Field::new(),
             status: Status::InitialMove { starting_player },
             ai_reasoning: false,
+            seed: None,
+            pvp: false,
         }
     }
 
@@ -102,10 +149,11 @@ impl Game {
 
     pub fn pp(&self) {
         println!("Quarto, round: {}", self.round());
+        println!();
         if self.running() {
-            println!("{:?}, move!", self.player());
+            println!("{}, your move.", self.player());
         } else if let Some(winner) = self.winner() {
-            println!("{winner:?} won!");
+            println!("{winner} won!");
         } else {
             println!("Game ended in a draw!");
         }
@@ -115,10 +163,11 @@ impl Game {
             self.pp_remaining_pieces();
         }
         println!("\nField:");
-        self.field.pp();
+        self.field.pp(self.array_base);
 
         if let Some(piece) = self.next_piece() {
             println!("\nThe next piece to place is:");
+            print!("       ");
             piece.pp();
             println!();
         }
@@ -129,14 +178,15 @@ impl Game {
             if i > 0 && (i) % 3 == 0 {
                 println!();
             }
-            print!("{i}: ");
-            if i < 10 {
+            let based_i = self.array_base.based(i);
+            print!("  {based_i}: ");
+            if self.array_base.based(i) < 10 {
                 // padding for low numbers
                 print!(" ");
             }
             piece.pp();
             if i < (Field::SIZE * Field::SIZE) - 1 && (i + 1) % 3 != 0 {
-                print!(", ");
+                print!(",  ");
             }
         }
         println!();
@@ -206,6 +256,36 @@ impl Game {
         } else {
             Err(())
         }
+    }
+
+    /// Undo the latest move
+    #[cfg(test)]
+    pub fn unmove(&mut self, last_pos: Pos) {
+        let next_player = match self.status {
+            Status::InitialMove { .. } => {
+                panic!("Can't unmove an initial move, use unmove_initial!")
+            }
+            Status::Won { winner } => winner,
+            Status::Draw { last_player } => last_player,
+            Status::Move { next_player, .. } => next_player,
+        };
+
+        // There are only two players, so next is also prev.
+        let prev_player = next_player.next();
+
+        let last_piece = self.field.clear(last_pos).unwrap();
+        self.remaining_pieces.push(last_piece);
+
+        if self.remaining_pieces.len() == Field::SIZE * Field::SIZE {
+            self.status = Status::InitialMove {
+                starting_player: next_player,
+            }
+        } else {
+            self.status = Status::Move {
+                next_piece: last_piece,
+                next_player: prev_player,
+            }
+        };
     }
 }
 
