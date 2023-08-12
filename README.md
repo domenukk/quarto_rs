@@ -2,6 +2,8 @@
 
 Your friendly Quarto game.
 
+Install using `cargo install quarto` or clone this repo and `cargo run`
+
 ![Quarto In-Game Screenshot](quarto.png?raw=true "Quarto In-Game Screenshot")
 
 The game is played on a 4x4 board with 16 pieces. Each piece has four distinct
