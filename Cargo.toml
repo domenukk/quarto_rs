@@ -1,19 +1,19 @@
 # cargo-features = ["profile-rustflags"]
 [package]
 name = "quarto"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "A simple quarto engine"
-license = "MIT"
+description = "Your command line quarto"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/domenukk/quarto_rs"
-readme = "https://github.com/domenukk/quarto_rs/readme.md"
+readme = "https://github.com/domenukk/quarto_rs/README.md"
 keywords = ["game"]
 categories = ["game"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 #[profile.heavy-opt]
-#inherits = "release"
-#opt-level = 3
-#lto = "fat"
-#rustflags = ["-C", "target-cpu=native"]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+rustflags = ["-C", "target-cpu=native"]
