@@ -2,6 +2,8 @@
 
 Your friendly Quarto game.
 
+![Quarto In-Game Screenshot](quarto.png?raw=true "Quarto In-Game Screenshot")
+
 The game is played on a 4x4 board with 16 pieces. Each piece has four distinct
 characteristics: size (large/✋ or small/🤏), color (light/⬜ or dark/⬛),
 shape (round/🟠 or square/🔶), and fill (filled/🔴 or hollow/⭕).
@@ -31,3 +33,21 @@ Options:
 ```
 
 Good luck!
+
+
+#### License
+
+<sup>
+Licensed under either of <a href="LICENSE-APACHE">Apache License, Version
+2.0</a> or <a href="LICENSE-MIT">MIT license</a> at your option.
+</sup>
+
+<br>
+
+<sub>
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this crate by you, as defined in the Apache-2.0 license, shall
+be dual licensed as above, without any additional terms or conditions.
+</sub>
+
+<br>
