@@ -1,6 +1,7 @@
 # cargo-features = ["profile-rustflags"]
 [package]
 name = "quarto"
+authors = ["Carl Smith <cffsmith@google.com>", "Dominik Maier <domenukk@gmail.com>"]
 version = "0.2.0"
 edition = "2021"
 description = "Your friendly Quarto game"

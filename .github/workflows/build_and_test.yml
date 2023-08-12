@@ -22,7 +22,7 @@ jobs:
                 toolchain: nightly
                 override: true
             - name: rustup
-              run: rustup component add rustfmt clippy --toolchain nightly-x86_64-unknown-linux-gnu
+              run: rustup component add rustfmt clippy
             - uses: actions/checkout@v3
             - uses: Swatinem/rust-cache@v2
             - name: Format
