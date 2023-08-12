@@ -7,7 +7,7 @@ edition = "2021"
 description = "Your friendly Quarto game"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/domenukk/quarto_rs"
-readme = "https://github.com/domenukk/quarto_rs/README.md"
+readme = "README.md"
 keywords = ["game"]
 categories = ["game"]
 
