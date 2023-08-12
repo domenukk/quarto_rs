@@ -103,6 +103,7 @@ mod tests {
     const TEST_LIGHT_TALL: Piece = Piece::with_props(Property::Tall as u8 | Property::Light as u8);
 
     #[test]
+    #[allow(clippy::assertions_on_constants)]
     fn test_repr() {
         // Test the binary representation of a piece.
         assert!(TEST_LIGHT_TALL.properties == 0b_0110_1001);

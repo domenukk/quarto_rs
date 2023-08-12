@@ -3,7 +3,7 @@
 name = "quarto"
 version = "0.2.0"
 edition = "2021"
-description = "Your command line quarto"
+description = "Your friendly Quarto game"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/domenukk/quarto_rs"
 readme = "https://github.com/domenukk/quarto_rs/README.md"
